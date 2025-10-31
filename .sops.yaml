@@ -1,0 +1,30 @@
+keys:
+  # personal machines
+  - &izanami age10rdeh7dwmtz2ka6urw4ufp566la0epu25yp2j0xk2zdrc9lg7g7qa0y4n6
+  - &kirsi age13f3kzht5m3awmqp54c2wgkd482z5m0f34z00lcklc3nsq7z383esea20py
+  - &kirsi-wsl age1whyxxr2zdn3gc8meu0jr4tugdcmw6xg8asxa00gqwx5yy3mfv9esw2p74a
+  # "servers"
+  - &yuki age1z6wr7avkp4d4fkssmfa0daygvzrhyg0gzdgzgq504stqjk3rmf2q5gn9jc
+
+creation_rules:
+  - path_regex: hosts/yuki/config$
+    key_groups:
+      - age:
+          - *izanami
+          - *kirsi
+          - *kirsi-wsl
+          - *yuki
+
+  - path_regex: hosts/kirsi-wsl/config$
+    key_groups:
+      - age:
+          - *izanami
+          - *kirsi
+          - *kirsi-wsl
+
+  - path_regex: hosts/kirsi/config$
+    key_groups:
+      - age:
+          - *izanami
+          - *kirsi
+          - *kirsi-wsl
