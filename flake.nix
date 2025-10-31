@@ -1,7 +1,11 @@
 {
   description = "homelab";
 
-  outputs = {nixpkgs, ...} @ inputs: let
+  outputs = {
+    nixpkgs,
+    flake-utils,
+    ...
+  } @ inputs: let
     hostsPath = ./hosts;
     hosts =
       builtins.readDir hostsPath
@@ -19,26 +23,27 @@
           ./modules
         ];
       };
-  in {
-    nixosConfigurations =
-      nixpkgs.lib.genAttrs hosts mkHost;
-
-    devShells.default = with nixpkgs;
-      mkShell {
-        packages = [
-          nodejs_24
-          pnpm
-          pkg-config
-          openssl
-          just
-          mprocs
-          rust
-        ];
+  in
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = import nixpkgs {
+        inherit system;
       };
-  };
+    in {
+      nixosConfigurations =
+        nixpkgs.lib.genAttrs hosts mkHost;
+
+      devShells.default = with pkgs;
+        mkShell {
+          packages = [
+            kubectl
+            kubectx
+          ];
+        };
+    });
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

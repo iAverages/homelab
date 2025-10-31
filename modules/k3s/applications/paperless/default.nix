@@ -6,11 +6,6 @@
 }: let
   cfg = config.homelab.paperless;
 in {
-  imports = [
-    ./db.nix
-    ./pvc.nix
-  ];
-
   options.homelab.paperless = {
     enable = lib.mkEnableOption "paperless";
     domain = lib.mkOption {
@@ -19,7 +14,7 @@ in {
     };
   };
 
-  config.services.k3s.autoDeployCharts.immich = lib.mkIf cfg.enable {
+  config.services.k3s.autoDeployCharts.paperless = lib.mkIf cfg.enable {
     package = pkgs.lib.downloadHelmChart {
       repo = "https://bjw-s-labs.github.io/helm-charts";
       chart = "app-template";
@@ -51,7 +46,7 @@ in {
                 PAPERLESS_PORT = "8000";
                 PAPERLESS_TIME_ZONE = "Europe/London";
                 PAPERLESS_URL = "https://paperless.dan.local";
-                PAPERLESS_REDIS = "redis://valkey-primary.default.svc.cluster.local";
+                PAPERLESS_REDIS = "redis://valkey.paperless.svc.cluster.local";
                 PAPERLESS_FILENAME_FORMAT = ''{{ created_year }}/{{ document_type }}/{{ created_year }}-{{ created_month }}-{{ created_day }}_{{ title }}'';
                 PAPERLESS_FILENAME_FORMAT_REMOVE_NONE = "true";
                 PAPERLESS_CONSUMER_ENABLE_BARCODES = "1";
