@@ -29,8 +29,7 @@
         inherit system;
       };
     in {
-      nixosConfigurations =
-        nixpkgs.lib.genAttrs hosts mkHost;
+      nixosConfigurations = nixpkgs.lib.genAttrs hosts mkHost;
 
       devShells.default = with pkgs;
         mkShell {
