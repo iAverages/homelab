@@ -28,5 +28,6 @@
   i18n.defaultLocale = "en_GB.UTF-8";
   console.keyMap = "uk";
 
+  nixpkgs.hostPlatform = "x86_64-linux";
   system.stateVersion = "23.11";
 }
