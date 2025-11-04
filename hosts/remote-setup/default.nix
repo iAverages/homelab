@@ -8,6 +8,7 @@
 
   networking.hostName = "nixos-remote-setup";
   networking.firewall = {
+    enable = true;
     allowedTCPPorts = [22];
   };
 
@@ -17,6 +18,16 @@
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
       PermitRootLogin = "yes";
+    };
+  };
+
+  nix = {
+    settings = {
+      experimental-features = [
+        "nix-command"
+        "flakes"
+        "pipe-operators"
+      ];
     };
   };
 
