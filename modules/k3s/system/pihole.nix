@@ -1,0 +1,89 @@
+{
+  lib,
+  config,
+  ...
+}: let
+  cfg = config.homelab.pihole;
+  inherit (lib) types;
+in {
+  options.homelab.pihole = {
+    enable = lib.mkOption {
+      type = types.bool;
+      default = false;
+    };
+    passwordFile = lib.mkOption {type = types.path;};
+    dns = lib.mkOption {type = types.str;};
+    domain = lib.mkOption {type = types.str;};
+    dnsIp = lib.mkOption {type = types.str;};
+  };
+
+  config.services.k3s = lib.mkIf cfg.enable {
+    autoDeployCharts.pihole = {
+      name = "pihole";
+      repo = "https://mojo2600.github.io/pihole-kubernetes/";
+      version = "2.34.0";
+      hash = "";
+      targetNamespace = "pihole";
+      createNamespace = true;
+
+      values = {
+        DNS1 = "1.1.1.1";
+        DNS2 = "1.0.0.1";
+        admin = {
+          enable = true;
+          existingSecret = "pihole-admin-password";
+          passwordKey = "password";
+        };
+        persistentVolumeClaim = {
+          enabled = true;
+          storageClass = "local-path";
+        };
+        serviceWeb = {
+          https = {
+            enabled = false; # traefik handles https
+          };
+        };
+        ingress = {
+          enabled = true;
+          ingressClassName = "traefik";
+          hosts = [
+            {
+              host = cfg.domain;
+              service = {
+                identifier = "app";
+                port = "http";
+              };
+            }
+          ];
+        };
+        serviceDns = {
+          loadBalancerIP = "192.168.178.252";
+          annotations = {"metallb.universe.tf/allow-shared-ip" = "pihole-svc";};
+          type = "LoadBalancer";
+        };
+        monitoring = {
+          podMonitor = {
+            enabled = true;
+          };
+          sidecar = {
+            enabled = true;
+          };
+        };
+        podDnsConfig = {
+          nameservers = ["127.0.0.1" "1.1.1.1"];
+        };
+      };
+    };
+
+    secrets = [
+      {
+        name = "pihole-admin-password";
+        namespace = "pihole";
+        type = "kubernetes.io/tls";
+        data = {
+          password = cfg.passwordFile;
+        };
+      }
+    ];
+  };
+}

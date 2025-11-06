@@ -7,22 +7,7 @@ keys:
   - &yuki age1z6wr7avkp4d4fkssmfa0daygvzrhyg0gzdgzgq504stqjk3rmf2q5gn9jc
 
 creation_rules:
-  - path_regex: hosts/yuki/config$
-    key_groups:
-      - age:
-          - *izanami
-          - *kirsi
-          - *kirsi-wsl
-          - *yuki
-
-  - path_regex: hosts/kirsi-wsl/config$
-    key_groups:
-      - age:
-          - *izanami
-          - *kirsi
-          - *kirsi-wsl
-
-  - path_regex: hosts/kirsi/config$
+  - path_regex: hosts/kurumi/secrets/.*
     key_groups:
       - age:
           - *izanami

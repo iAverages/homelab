@@ -1,3 +1,6 @@
 {
-  imports = [./paperless];
+  imports = [
+    # ./paperless
+    # ./example.nix
+  ];
 }

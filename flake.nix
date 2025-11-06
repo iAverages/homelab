@@ -23,22 +23,23 @@
           ./modules
         ];
       };
-  in
-    flake-utils.lib.eachDefaultSystem (system: let
+  in {
+    nixosConfigurations = nixpkgs.lib.genAttrs hosts mkHost;
+
+    devShells = flake-utils.lib.eachDefaultSystemMap (system: let
       pkgs = import nixpkgs {
         inherit system;
       };
     in {
-      nixosConfigurations = nixpkgs.lib.genAttrs hosts mkHost;
-
-      devShells.default = with pkgs;
-        mkShell {
-          packages = [
-            kubectl
-            kubectx
-          ];
-        };
+      default = pkgs.mkShell {
+        packages = with pkgs; [
+          kubectl
+          kubectx
+          sops
+        ];
+      };
     });
+  };
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
