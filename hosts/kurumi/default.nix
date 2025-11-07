@@ -13,9 +13,15 @@ in {
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
     secrets = {
+      zfsDataPoolKey = {
+        format = "binary";
+        sopsFile = ./secrets/zfsDataPoolKey;
+      };
+      danPassword = {};
       "pihole/password" = {};
       "grafana/username" = {};
       "grafana/password" = {};
+      "discordWebhookUrl" = {};
       tlsCrt = {
         format = "binary";
         sopsFile = ./secrets/ssl/dan-local.crt;
@@ -37,8 +43,7 @@ in {
     isNormalUser = true;
     description = "dan";
     extraGroups = ["networkmanager" "wheel"];
-    password = "test";
-    # hashedPasswordFile = config.sops.secrets.danPassword.path;
+    hashedPasswordFile = config.sops.secrets.danPassword.path;
   };
 
   homelab = {
@@ -51,6 +56,7 @@ in {
         enable = true;
         grafanaUser = config.sops.secrets."grafana/username".path;
         grafanaPasswordFile = config.sops.secrets."grafana/password".path;
+        discordWebhookUrl = config.sops.secrets.discordWebhookUrl.path;
       };
     };
     pihole = {
@@ -120,8 +126,10 @@ in {
 
   services.openssh = {
     enable = true;
-    PermitRootLogin = "prohibit-password";
-    PasswordAuthentication = false;
+    settings = {
+      PermitRootLogin = "prohibit-password";
+      PasswordAuthentication = false;
+    };
   };
 
   nixpkgs.hostPlatform = "x86_64-linux";

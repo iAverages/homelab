@@ -29,15 +29,5 @@ in {
         };
       };
     };
-
-    secrets = [
-      {
-        name = "pihole-admin-password";
-        namespace = "pihole";
-        data = {
-          password = cfg.passwordFile;
-        };
-      }
-    ];
   };
 }

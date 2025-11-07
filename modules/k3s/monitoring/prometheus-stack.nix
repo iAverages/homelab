@@ -25,6 +25,9 @@ in {
         then "grafana.${config.homelab.domain}"
         else null;
     };
+    discordWebhookUrl = lib.mkOption {
+      type = types.nullOr types.str;
+    };
   };
 
   config.services.k3s = lib.mkIf cfg.enable {
@@ -36,9 +39,65 @@ in {
       targetNamespace = "monitoring";
       createNamespace = true;
       values = {
+        alertmanager = {
+          enabled = true;
+          config = {
+            receivers = [
+              # TODO: setup
+              # {
+              #   name = "email-receiver";
+              #   email_configs = [
+              #     {
+              #       to = "alerts@danielraybone.com";
+              #       from = "no-reply@danielraybone.com";
+              #       smarthost = "smtp.example.com:587";
+              #       auth_username = {
+              #         name = "alertmanager-email-creds";
+              #         key = "smtp-username";
+              #       };
+              #       auth_password = {
+              #         name = "alertmanager-email-creds";
+              #         key = "smtp-password";
+              #       };
+              #     }
+              #   ];
+              # }
+              (lib.optionals
+                (cfg.discordWebhookUrl != null)
+                {
+                  name = "discord-receiver";
+                  webhook_configs = [
+                    {
+                      url = {
+                        name = "alertmanager-discord-webhook";
+                        key = "url";
+                      };
+                    }
+                  ];
+                })
+            ];
+            route = {
+              group_by = ["alertname"];
+              group_wait = "30s";
+              group_interval = "5m";
+              repeat_interval = "4h";
+              receiver = "default-receiver";
+              routes = [
+                {
+                  match_re = {severity = "critical|warning";};
+                  receiver = "email-receiver";
+                }
+                {
+                  match_re = {severity = "critical";};
+                  receiver = "discord-receiver";
+                }
+              ];
+            };
+          };
+        };
         grafana = {
           admin.existingSecret = "grafana-admin-password";
-          persistence.enabled = true;
+          initChownData.enabled = false;
           ingress = {
             enabled = true;
             ingressClassName = "traefik";
@@ -69,6 +128,13 @@ in {
         data = {
           admin-user = cfg.grafanaUser;
           admin-password = cfg.grafanaPasswordFile;
+        };
+      }
+      {
+        name = "alertmanager-discord-webhook";
+        namespace = "monitoring";
+        data = {
+          url = cfg.discordWebhookUrl;
         };
       }
     ];
