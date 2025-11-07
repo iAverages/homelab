@@ -14,6 +14,8 @@ in {
     defaultSopsFile = ./secrets/secrets.yaml;
     secrets = {
       "pihole/password" = {};
+      "grafana/username" = {};
+      "grafana/password" = {};
       tlsCrt = {
         format = "binary";
         sopsFile = ./secrets/ssl/dan-local.crt;
@@ -44,7 +46,11 @@ in {
     domain = "dan.local";
     metallb.addresses = ["192.168.1.11-192.168.1.149"];
     monitoring = {
-      prometheus-stack.enable = true;
+      prometheus-stack = {
+        enable = true;
+        grafanaUser = config.sops.secrets."grafana/username".path;
+        grafanaPasswordFile = config.sops.secrets."grafana/password".path;
+      };
     };
     pihole = {
       enable = true;

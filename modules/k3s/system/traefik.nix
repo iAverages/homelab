@@ -9,6 +9,7 @@ in {
   options.homelab.traefik.tls = {
     crt = lib.mkOption {type = types.path;};
     key = lib.mkOption {type = types.path;};
+    domain = lib.mkOption {type = types.str;};
   };
 
   config.services.k3s = lib.mkIf config.homelab.enable {
@@ -22,6 +23,13 @@ in {
       createNamespace = true;
 
       values = {
+        ingressRoute = {
+          dashboard = {
+            enabled = true;
+            matchRule = "Host(`traefik.dan.local`)";
+            entryPoints = ["websecure"];
+          };
+        };
         ports = {
           web = {
             redirections = {
@@ -33,16 +41,16 @@ in {
             };
           };
         };
-        # metrics = {
-        #   prometheus = {
-        #     service = {
-        #       enabled = true;
-        #     };
-        #     serviceMonitor = {
-        #       enabled = true;
-        #     };
-        #   };
-        # };
+        metrics = {
+          prometheus = {
+            service = {
+              enabled = true;
+            };
+            serviceMonitor = {
+              enabled = true;
+            };
+          };
+        };
         ingressClass = {
           name = "traefik";
         };
