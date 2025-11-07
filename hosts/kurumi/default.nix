@@ -45,6 +45,7 @@ in {
     enable = true;
     domain = "dan.local";
     metallb.addresses = ["192.168.1.11-192.168.1.149"];
+    cnpg.enable = true;
     monitoring = {
       prometheus-stack = {
         enable = true;
@@ -119,8 +120,8 @@ in {
 
   services.openssh = {
     enable = true;
-    permitRootLogin = "prohibit-password";
-    passwordAuthentication = false;
+    PermitRootLogin = "prohibit-password";
+    PasswordAuthentication = false;
   };
 
   nixpkgs.hostPlatform = "x86_64-linux";

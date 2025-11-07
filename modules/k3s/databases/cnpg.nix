@@ -18,7 +18,7 @@ in {
       name = "cloudnative-pg";
       repo = "https://cloudnative-pg.github.io/charts";
       version = "0.26.1";
-      hash = "";
+      hash = "sha256-hkaaSse56AZgLX4ORajhfwjXyifMVbRdWwhOCE6koHU=";
       targetNamespace = "cnpg";
       createNamespace = true;
 
