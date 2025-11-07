@@ -1,0 +1,3 @@
+{
+  imports = [./prometheus-stack.nix];
+}

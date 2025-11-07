@@ -7,22 +7,62 @@
   inherit (lib) types;
 in {
   options.homelab.traefik.tls = {
-    key = lib.mkOption {
-      type = types.listOf lib.types.str;
-    };
-
-    crt = lib.mkOption {
-      type = types.listOf lib.types.str;
-    };
+    crt = lib.mkOption {type = types.path;};
+    key = lib.mkOption {type = types.path;};
   };
 
-  config.services.k3s.autoDeployCharts.traefik = {
-    name = "metallb";
-    repo = "https://metallb.github.io/metallb";
-    version = "6.4.22";
-    hash = "";
-    targetNamespace = "traefik";
-    createNamespace = true;
+  config.services.k3s = lib.mkIf config.homelab.enable {
+    # needs to be called traefik-helm as k3s tried to write to the same file
+    autoDeployCharts.traefik-helm = {
+      name = "traefik";
+      repo = "https://traefik.github.io/charts";
+      version = "37.2.0";
+      hash = "sha256-AEncqkz0Rei7/+b7SiEHeKX2xRmAbF6Zu1n6Ob2NB80=";
+      targetNamespace = "traefik";
+      createNamespace = true;
+
+      values = {
+        ports = {
+          web = {
+            redirections = {
+              entryPoint = {
+                to = "websecure";
+                scheme = "https";
+                permanent = true;
+              };
+            };
+          };
+        };
+        # metrics = {
+        #   prometheus = {
+        #     service = {
+        #       enabled = true;
+        #     };
+        #     serviceMonitor = {
+        #       enabled = true;
+        #     };
+        #   };
+        # };
+        ingressClass = {
+          name = "traefik";
+        };
+        providers = {
+          kubernetesCRD = {
+            ingressClass = "traefik";
+          };
+          kubernetesIngress = {
+            ingressClass = "traefik";
+          };
+        };
+        tlsStore = {
+          default = {
+            defaultCertificate = {
+              secretName = "dan-local-cert";
+            };
+          };
+        };
+      };
+    };
 
     secrets = [
       {
@@ -34,47 +74,5 @@ in {
         };
       }
     ];
-
-    values = {
-      ports = {
-        web = {
-          redirections = {
-            entryPoint = {
-              to = "websecure";
-              scheme = "https";
-              permanent = true;
-            };
-          };
-        };
-      };
-      metrics = {
-        prometheus = {
-          service = {
-            enabled = true;
-          };
-          serviceMonitor = {
-            enabled = true;
-          };
-        };
-      };
-      ingressClass = {
-        name = "traefik";
-      };
-      providers = {
-        kubernetesCRD = {
-          ingressClass = "traefik";
-        };
-        kubernetesIngress = {
-          ingressClass = "traefik";
-        };
-      };
-      tlsStore = {
-        default = {
-          defaultCertificate = {
-            secretName = "dan-local-cert";
-          };
-        };
-      };
-    };
   };
 }

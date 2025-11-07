@@ -22,13 +22,18 @@ in {
       name = "pihole";
       repo = "https://mojo2600.github.io/pihole-kubernetes/";
       version = "2.34.0";
-      hash = "";
+      hash = "sha256-lE3DV9gvVFE2oc8oQh4OV0aftZmTx1iYbNlZBYSzidw=";
       targetNamespace = "pihole";
       createNamespace = true;
 
       values = {
         DNS1 = "1.1.1.1";
         DNS2 = "1.0.0.1";
+        dnsmasq = {
+          customDnsEntries = [
+            "address=/dan.local/192.168.1.12"
+          ];
+        };
         admin = {
           enable = true;
           existingSecret = "pihole-admin-password";
@@ -47,28 +52,22 @@ in {
           enabled = true;
           ingressClassName = "traefik";
           hosts = [
-            {
-              host = cfg.domain;
-              service = {
-                identifier = "app";
-                port = "http";
-              };
-            }
+            cfg.domain
           ];
         };
         serviceDns = {
-          loadBalancerIP = "192.168.178.252";
+          loadBalancerIP = cfg.dnsIp;
           annotations = {"metallb.universe.tf/allow-shared-ip" = "pihole-svc";};
           type = "LoadBalancer";
         };
-        monitoring = {
-          podMonitor = {
-            enabled = true;
-          };
-          sidecar = {
-            enabled = true;
-          };
-        };
+        # monitoring = {
+        #   podMonitor = {
+        #     enabled = true;
+        #   };
+        #   sidecar = {
+        #     enabled = true;
+        #   };
+        # };
         podDnsConfig = {
           nameservers = ["127.0.0.1" "1.1.1.1"];
         };
@@ -79,7 +78,6 @@ in {
       {
         name = "pihole-admin-password";
         namespace = "pihole";
-        type = "kubernetes.io/tls";
         data = {
           password = cfg.passwordFile;
         };

@@ -3,7 +3,7 @@
   config,
   ...
 }: {
-  imports = [./applications ./system ./options.nix];
+  imports = [./applications ./monitoring ./system ./options.nix];
 
   options = {
     homelab = {
