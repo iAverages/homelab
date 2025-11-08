@@ -1,9 +1,19 @@
-{config, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUqxOzmjOS0TmJkoV9SQtzo2iOt1JzFJsg84KhPshGb me@danielraybone.com";
+  sambaUsersMap = {
+    dan = {
+      hashedPasswordFile = config.sops.secrets.danPassword.path;
+    };
+  };
 in {
   imports = [
     ./disko.nix
     ./hardware-configuration.nix
+    ./samba.nix
   ];
 
   users.users.root.openssh.authorizedKeys.keys = [
@@ -44,6 +54,18 @@ in {
     description = "dan";
     extraGroups = ["networkmanager" "wheel"];
     hashedPasswordFile = config.sops.secrets.danPassword.path;
+  };
+
+  system.activationScripts.setSambaPasswords = {
+    # Ensure this script runs after sops-nix has decrypted the secrets
+    requires = ["sops-nix-activate"];
+    text = lib.concatStringsSep "\n" (lib.mapAttrsToList (name: userConfig: ''
+        # The password needs to be passed twice
+        /run/current-system/sw/bin/printf \
+          "$(/run/current-system/sw/bin/cat ${userConfig.hashedPasswordFile})\n$(/run/current-system/sw/bin/cat ${userConfig.hashedPasswordFile})\n" \
+          | /run/current-system/sw/bin/smbpasswd -sa ${name}
+      '')
+      sambaUsersMap);
   };
 
   homelab = {
