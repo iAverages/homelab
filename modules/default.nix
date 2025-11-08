@@ -1,3 +1,3 @@
 {
-  imports = [./k3s];
+  imports = [./k3s ./nixos];
 }

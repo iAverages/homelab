@@ -113,16 +113,22 @@
           };
         };
       };
+
       dataPool = {
         type = "zpool";
         mode = {
           topology = {
-            type = "raidz1";
-            members = [
-              "sda"
-              "sdb"
-              "sdc"
-              "sdd"
+            type = "topology";
+            vdev = [
+              {
+                mode = "raidz1";
+                members = [
+                  "sda"
+                  "sdb"
+                  "sdc"
+                  "sdd"
+                ];
+              }
             ];
           };
         };
@@ -132,22 +138,24 @@
           atime = "off";
           xattr = "sa";
           acltype = "posixacl";
-          ashift = "12";
           encryption = "on";
-          keylocation = config.sops.secrets.zfsDataPoolKey.path;
+          keylocation = "file:///root/zfsDataPoolKey";
           keyformat = "raw";
+        };
+        options = {
+          ashift = "12";
         };
         datasets = {
           "data" = {
             type = "zfs_fs";
-            mountpoint = "/mnt/data";
+            mountpoint = "/opt/data";
             options = {
               compression = "zstd";
             };
           };
           "backups" = {
             type = "zfs_fs";
-            mountpoint = "/mnt/backups";
+            mountpoint = "/opt/backups";
             options = {
               compression = "zstd-1";
             };

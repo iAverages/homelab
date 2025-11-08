@@ -141,5 +141,23 @@ in {
     };
   };
 
+  services.samba = {
+    enable = true;
+    shares = {
+      data = {
+        comment = "main data pool";
+        browseable = false;
+        readOnly = false;
+        createMask = "0700";
+        directoryMask = "0700";
+        validUsers = "dan";
+      };
+    };
+    extraConfig = ''
+      security = user
+      map to guest = bad user
+    '';
+  };
+
   system.stateVersion = "23.11";
 }
