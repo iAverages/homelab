@@ -66,6 +66,7 @@ in {
     repo = "ssh://u474421-sub6@u474421-sub6.your-storagebox.de:23/./backups";
     extraPaths = [
       "/opt/data"
+      "/opt/kubernetes"
     ];
   };
 

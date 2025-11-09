@@ -6,8 +6,6 @@
   cfg = config.homelab.pihole;
   inherit (lib) types;
 in {
-  # imports = [./pv.nix];
-
   options.homelab.pihole = {
     enable = lib.mkOption {
       type = types.bool;
@@ -29,6 +27,9 @@ in {
       createNamespace = true;
 
       values = {
+        image = {
+          tag = "2025.11.0";
+        };
         DNS1 = "1.1.1.1";
         DNS2 = "1.0.0.1";
         dnsmasq = {
@@ -43,7 +44,7 @@ in {
         };
         persistentVolumeClaim = {
           enabled = true;
-          storageClass = "local-path";
+          existingClaim = "pihole-pvc";
         };
         serviceWeb = {
           https = {
@@ -75,6 +76,48 @@ in {
         };
       };
     };
+
+    manifests = {
+      pihole-pv.content = {
+        apiVersion = "v1";
+        kind = "PersistentVolume";
+        metadata = {
+          name = "pihole-pv";
+          namespace = "pihole";
+        };
+        spec = {
+          capacity = {storage = "4Gi";};
+          accessModes = ["ReadWriteOnce"];
+          storageClassName = "local-path";
+          persistentVolumeReclaimPolicy = "Retain";
+          hostPath = {path = "/opt/kubernetes/pihole";};
+        };
+      };
+      pihole-pvc.content = {
+        apiVersion = "v1";
+        kind = "PersistentVolumeClaim";
+        metadata = {
+          name = "pihole-pvc";
+          namespace = "pihole";
+        };
+        spec = {
+          resources = {requests = {storage = "4Gi";};};
+          accessModes = ["ReadWriteOnce"];
+          storageClassName = "local-path";
+          volumeName = "pihole-pv";
+        };
+      };
+    };
+
+monitoring.dashboards = [
+      {
+        name = "pihole-grafana-dasbhard";
+        namespace = "pihole";
+        data = {
+          "dashboard.json" = ./dashboard.json;
+        }
+      }
+    ];
 
     secrets = [
       {
