@@ -8,7 +8,8 @@
       |> builtins.attrNames
       |> builtins.filter (name: lib.hasSuffix ".json" name);
 
-    formatName = name: lib.removeSuffix ".json" name;
+    formatName = name: (lib.removeSuffix ".json" name);
+    formatManifestKey = name: (lib.removeSuffix ".json" name) + "-dashboard";
   in
     lib.genAttrs dashboards (
       fileName: let
@@ -17,18 +18,24 @@
         jsonContent = builtins.fromJSON fileContent;
         dashboardName = formatName fileName;
       in {
-        apiVersion = "v1";
-        kind = "ConfigMap";
-        metadata = {
-          name = "grafana-${dashboardName}-dashboard";
-          namespace = "monitoring";
-          labels = {
-            grafana_dashboard = "1";
+        content = {
+          apiVersion = "v1";
+          kind = "ConfigMap";
+          metadata = {
+            name = "grafana-${dashboardName}-dashboard";
+            namespace = "monitoring";
+            labels = {
+              grafana_dashboard = "1";
+            };
+          };
+          data = {
+            "${fileName}.json" = jsonContent;
           };
         };
-        data = {
-          "${fileName}" = jsonContent;
-        };
       }
-    );
+    )
+    |> lib.mapAttrs' (name: value: {
+      name = formatManifestKey name;
+      value = value;
+    });
 }
