@@ -1,0 +1,120 @@
+{
+  lib,
+  config,
+  ...
+}: let
+  cfg = config.homelab.pihole;
+  inherit (lib) types;
+in {
+  # imports = [./pv.nix];
+
+  options.homelab.pihole = {
+    enable = lib.mkOption {
+      type = types.bool;
+      default = false;
+    };
+    passwordFile = lib.mkOption {type = types.path;};
+    dns = lib.mkOption {type = types.str;};
+    domain = lib.mkOption {type = types.str;};
+    dnsIp = lib.mkOption {type = types.str;};
+  };
+
+  config.services.k3s = lib.mkIf cfg.enable {
+    autoDeployCharts.pihole = {
+      name = "pihole";
+      repo = "https://mojo2600.github.io/pihole-kubernetes/";
+      version = "2.34.0";
+      hash = "sha256-lE3DV9gvVFE2oc8oQh4OV0aftZmTx1iYbNlZBYSzidw=";
+      targetNamespace = "pihole";
+      createNamespace = true;
+
+      values = {
+        DNS1 = "1.1.1.1";
+        DNS2 = "1.0.0.1";
+        dnsmasq = {
+          customDnsEntries = [
+            "address=/dan.local/192.168.1.12"
+          ];
+        };
+        admin = {
+          enable = true;
+          existingSecret = "pihole-admin-password";
+          passwordKey = "password";
+        };
+        persistentVolumeClaim = {
+          enabled = true;
+          storageClass = "local-path";
+        };
+        serviceWeb = {
+          https = {
+            enabled = false; # traefik handles https
+          };
+        };
+        ingress = {
+          enabled = true;
+          ingressClassName = "traefik";
+          hosts = [
+            cfg.domain
+          ];
+        };
+        serviceDns = {
+          loadBalancerIP = cfg.dnsIp;
+          annotations = {"metallb.universe.tf/allow-shared-ip" = "pihole-svc";};
+          type = "LoadBalancer";
+        };
+        monitoring = {
+          podMonitor = {
+            enabled = true;
+          };
+          sidecar = {
+            enabled = true;
+          };
+        };
+        podDnsConfig = {
+          nameservers = ["127.0.0.1" "1.1.1.1"];
+        };
+      };
+    };
+
+    manifests = let
+      dashboardDir = ./dashboards;
+      dashboards =
+        builtins.readDir dashboardDir
+        |> builtins.attrNames
+        |> builtins.filter (name: lib.hasSuffix ".json" name);
+
+      formatName = name: lib.removeSuffix ".json" name;
+    in
+      lib.genAttrs dashboards (
+        fileName: let
+          fullPath = "${dashboardDir}/${fileName}";
+          fileContent = builtins.readFile fullPath;
+          jsonContent = builtins.fromJSON fileContent;
+          dashboardName = formatName fileName;
+        in {
+          apiVersion = "v1";
+          kind = "ConfigMap";
+          metadata = {
+            name = "grafana-${dashboardName}-dashboard";
+            namespace = "monitoring";
+            labels = {
+              grafana_dashboard = "1";
+            };
+          };
+          data = {
+            "${fileName}" = jsonContent;
+          };
+        }
+      );
+
+    secrets = [
+      {
+        name = "pihole-admin-password";
+        namespace = "pihole";
+        data = {
+          password = cfg.passwordFile;
+        };
+      }
+    ];
+  };
+}

@@ -1,7 +1,7 @@
 {
   imports = [
+    ./pihole
     ./metallb.nix
-    ./pihole.nix
     ./traefik.nix
   ];
 }

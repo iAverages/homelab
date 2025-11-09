@@ -1,3 +1,3 @@
 {
-  import = [./borg-backup.nix];
+  imports = [./borg-backup.nix];
 }

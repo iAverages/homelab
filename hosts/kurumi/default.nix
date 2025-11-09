@@ -8,11 +8,6 @@
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHMR9EAOYgfjDJ6knl8kepEdIMyYOpX5bQhaXDiybX9W kirsi-wsl@danielraybone.com"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDjFLBWuH4DV86tNNmGP2ADurDLrLPtO3bCX5U6YElxs izanami@danielraybone.com"
   ];
-  sambaUsersMap = {
-    dan = {
-      hashedPasswordFile = config.sops.secrets.danPassword.path;
-    };
-  };
 in {
   imports = [
     ./disko.nix
@@ -35,6 +30,7 @@ in {
       "grafana/username" = {};
       "grafana/password" = {};
       "discordWebhookUrl" = {};
+      borgRepo = {};
       borgRepoKey = {};
       tlsCrt = {
         format = "binary";
@@ -65,9 +61,13 @@ in {
     allowedShares = ["data"];
   };
 
-  system.borgbackup.daily.extraPaths = [
-    "/opt/data"
-  ];
+  system.borgbackup.daily = {
+    enable = true;
+    repo = "ssh://u474421-sub6@u474421-sub6.your-storagebox.de:23/./backups";
+    extraPaths = [
+      "/opt/data"
+    ];
+  };
 
   homelab = {
     enable = true;
