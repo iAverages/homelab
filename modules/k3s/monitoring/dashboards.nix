@@ -59,7 +59,8 @@ in {
                 ${lib.optionalString (configMap.namespace != null) "namespace: ${configMap.namespace}"}
               data:
                 ${lib.concatStringsSep "\n  " (
-                lib.mapAttrsToList (key: path: "${key}: $(${pkgs.coreutils}/bin/cat ${path} | ${pkgs.coreutils}/bin/base64 -w 0)") configMap.data
+                lib.mapAttrsToList (key: path: "${key}: |-
+                  $(${pkgs.coreutils}/bin/cat ${path})") configMap.data
               )}
               EOF
             '';

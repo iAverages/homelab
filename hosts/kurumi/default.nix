@@ -75,6 +75,7 @@ in {
     domain = "dan.local";
     metallb.addresses = ["192.168.1.11-192.168.1.149"];
     cnpg.enable = true;
+    dragonfly.enable = true;
     monitoring = {
       prometheus-stack = {
         enable = true;
