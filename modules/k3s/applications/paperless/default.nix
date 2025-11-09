@@ -13,12 +13,14 @@ in {
     };
   };
 
-  config.services.k3s = {
-    autoDeployCharts.paperless = lib.mkIf cfg.enable {
-      name = "hello-world";
+  config.services.k3s = lib.mkIf cfg.enable {
+    autoDeployCharts.paperless = {
+      name = "app-template";
+      targetNamespace = "paperless";
+      createNamespace = true;
       repo = "https://bjw-s-labs.github.io/helm-charts";
       version = "4.4.0";
-      hash = "";
+      hash = "sha256-D9Wl/b+V8ydYwcsYsgMdrLp+tvVTq8tc18N7k8elvQ0=";
       values = {
         defaultPodOptions = {
           securityContext = {
@@ -40,7 +42,7 @@ in {
                   PAPERLESS_PORT = 8000;
                   PAPERLESS_TIME_ZONE = "Europe/London";
                   PAPERLESS_URL = "https://paperless.dan.local";
-                  PAPERLESS_REDIS = "redis://valkey-primary.default.svc.cluster.local";
+                  PAPERLESS_REDIS = "redis://paperless-dragonfly.paperless.svc.cluster.local";
                   PAPERLESS_FILENAME_FORMAT = "{{ `{{ created_year }}/{{ document_type }}/{{ created_year }}-{{ created_month }}-{{ created_day }}_{{ title }}` }}";
                   PAPERLESS_FILENAME_FORMAT_REMOVE_NONE = "true";
                   PAPERLESS_CONSUMER_ENABLE_BARCODES = 1;
@@ -59,7 +61,7 @@ in {
         ingress = {
           main = {
             enabled = true;
-            className = "internal";
+            className = "traefik";
             hosts = [
               {
                 host = "paperless.dan.local";
@@ -94,6 +96,27 @@ in {
       };
     };
     manifests = {
+      paperless-dragonfly.content = {
+        apiVersion = "dragonflydb.io/v1alpha1";
+        kind = "Dragonfly";
+        metadata = {
+          name = "paperless-dragonfly";
+          namespace = "paperless";
+        };
+        spec = {
+          replicas = 1;
+          resources = {
+            requests = {
+              cpu = "500m";
+              memory = "500Mi";
+            };
+            limits = {
+              cpu = "600m";
+              memory = "750Mi";
+            };
+          };
+        };
+      };
       paperless-pv.content = {
         apiVersion = "v1";
         kind = "PersistentVolume";

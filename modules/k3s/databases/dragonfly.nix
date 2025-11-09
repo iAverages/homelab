@@ -13,7 +13,7 @@ in {
     };
   };
   config.services.k3s.manifests = lib.mkIf cfg.enable {
-    dragonfly-namespace = {
+    dragonfly-namespace.content = {
       apiVersion = "v1";
       kind = "Namespace";
       metadata = {
@@ -29,7 +29,7 @@ in {
         name = "dragonfly-operator-system";
       };
     };
-    dragonfly-crd = {
+    dragonfly-crd.content = {
       apiVersion = "apiextensions.k8s.io/v1";
       kind = "CustomResourceDefinition";
       metadata = {
@@ -5193,7 +5193,7 @@ in {
         ];
       };
     };
-    dragonfly-controller-manager-service-account = {
+    dragonfly-controller-manager-service-account.content = {
       apiVersion = "v1";
       kind = "ServiceAccount";
       metadata = {
@@ -5209,7 +5209,7 @@ in {
         namespace = "dragonfly-operator-system";
       };
     };
-    dragonfly-leader-election-role = {
+    dragonfly-leader-election-role.content = {
       apiVersion = "rbac.authorization.k8s.io/v1";
       kind = "Role";
       metadata = {
@@ -5242,7 +5242,7 @@ in {
         }
       ];
     };
-    "dragonfly-operator-manager-role" = {
+    dragonfly-operator-manager-role.content = {
       apiVersion = "rbac.authorization.k8s.io/v1";
       kind = "ClusterRole";
       metadata = {name = "dragonfly-operator-manager-role";};
@@ -5284,7 +5284,7 @@ in {
         }
       ];
     };
-    dragonfly-operator-metrics-reader = {
+    dragonfly-operator-metrics-reader.content = {
       apiVersion = "rbac.authorization.k8s.io/v1";
       kind = "ClusterRole";
       metadata = {
@@ -5305,7 +5305,7 @@ in {
         }
       ];
     };
-    dragonfly-operator-proxy-role = {
+    dragonfly-operator-proxy-role.content = {
       apiVersion = "rbac.authorization.k8s.io/v1";
       kind = "ClusterRole";
       metadata = {
@@ -5332,7 +5332,7 @@ in {
         }
       ];
     };
-    dragonfly-operator-leader-election-rolebinding = {
+    dragonfly-operator-leader-election-rolebinding.content = {
       apiVersion = "rbac.authorization.k8s.io/v1";
       kind = "RoleBinding";
       metadata = {
@@ -5360,7 +5360,7 @@ in {
         }
       ];
     };
-    dragonfly-operator-manager-rolebinding = {
+    dragonfly-operator-manager-rolebinding.content = {
       apiVersion = "rbac.authorization.k8s.io/v1";
       kind = "ClusterRoleBinding";
       metadata = {
@@ -5387,7 +5387,7 @@ in {
         }
       ];
     };
-    dragonfly-operator-proxy-rolebinding = {
+    dragonfly-operator-proxy-rolebinding.content = {
       apiVersion = "rbac.authorization.k8s.io/v1";
       kind = "ClusterRoleBinding";
       metadata = {
@@ -5414,7 +5414,7 @@ in {
         }
       ];
     };
-    dragonfly-operator-controller-manager-metrics-service = {
+    dragonfly-operator-controller-manager-metrics-service.content = {
       apiVersion = "v1";
       kind = "Service";
       metadata = {
@@ -5442,7 +5442,7 @@ in {
         selector = {control-plane = "controller-manager";};
       };
     };
-    dragonfly-operator-controller-manager = {
+    dragonfly-operator-controller-manager.content = {
       apiVersion = "apps/v1";
       kind = "Deployment";
       metadata = {
