@@ -27,7 +27,7 @@ in {
   };
 
   config = lib.mkMerge [
-    (lib.mkIf (builtins.length cfg.secrets > 0) {
+    (lib.mkIf (builtins.length cfg.monitoring.dashboards > 0) {
       systemd.services = lib.listToAttrs (
         lib.map (configMap: {
           name = "k3s-configmap-${configMap.name}";
@@ -54,8 +54,9 @@ in {
               kind: ConfigMap
               metadata:
                 name: ${configMap.name}
+                labels:
+                  grafana_dashboard: "1"
                 ${lib.optionalString (configMap.namespace != null) "namespace: ${configMap.namespace}"}
-              type: ${configMap.type}
               data:
                 ${lib.concatStringsSep "\n  " (
                 lib.mapAttrsToList (key: path: "${key}: $(${pkgs.coreutils}/bin/cat ${path} | ${pkgs.coreutils}/bin/base64 -w 0)") configMap.data
@@ -64,7 +65,7 @@ in {
             '';
           };
         })
-        cfg.secrets
+        cfg.monitoring.dashboards
       );
     })
   ];

@@ -109,13 +109,13 @@ in {
       };
     };
 
-monitoring.dashboards = [
+    monitoring.dashboards = [
       {
         name = "pihole-grafana-dasbhard";
         namespace = "pihole";
         data = {
           "dashboard.json" = ./dashboard.json;
-        }
+        };
       }
     ];
 
