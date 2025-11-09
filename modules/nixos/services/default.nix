@@ -1,0 +1,3 @@
+{
+  import = [./borg-backup.nix];
+}

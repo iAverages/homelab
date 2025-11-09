@@ -3,7 +3,11 @@
   lib,
   ...
 }: let
-  publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUqxOzmjOS0TmJkoV9SQtzo2iOt1JzFJsg84KhPshGb me@danielraybone.com";
+  publicKeys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUqxOzmjOS0TmJkoV9SQtzo2iOt1JzFJsg84KhPshGb me@danielraybone.com"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHMR9EAOYgfjDJ6knl8kepEdIMyYOpX5bQhaXDiybX9W kirsi-wsl@danielraybone.com"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDjFLBWuH4DV86tNNmGP2ADurDLrLPtO3bCX5U6YElxs izanami@danielraybone.com"
+  ];
   sambaUsersMap = {
     dan = {
       hashedPasswordFile = config.sops.secrets.danPassword.path;
@@ -16,9 +20,7 @@ in {
     ./samba.nix
   ];
 
-  users.users.root.openssh.authorizedKeys.keys = [
-    publicKey
-  ];
+  users.users.root.openssh.authorizedKeys.keys = publicKeys;
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
@@ -28,10 +30,12 @@ in {
         sopsFile = ./secrets/zfsDataPoolKey;
       };
       danPassword = {};
+      danPasswordNoHash = {};
       "pihole/password" = {};
       "grafana/username" = {};
       "grafana/password" = {};
       "discordWebhookUrl" = {};
+      borgRepoKey = {};
       tlsCrt = {
         format = "binary";
         sopsFile = ./secrets/ssl/dan-local.crt;
@@ -56,17 +60,14 @@ in {
     hashedPasswordFile = config.sops.secrets.danPassword.path;
   };
 
-  system.activationScripts.setSambaPasswords = {
-    # Ensure this script runs after sops-nix has decrypted the secrets
-    requires = ["sops-nix-activate"];
-    text = lib.concatStringsSep "\n" (lib.mapAttrsToList (name: userConfig: ''
-        # The password needs to be passed twice
-        /run/current-system/sw/bin/printf \
-          "$(/run/current-system/sw/bin/cat ${userConfig.hashedPasswordFile})\n$(/run/current-system/sw/bin/cat ${userConfig.hashedPasswordFile})\n" \
-          | /run/current-system/sw/bin/smbpasswd -sa ${name}
-      '')
-      sambaUsersMap);
+  samba.users.dan = {
+    passwordFile = config.sops.secrets.danPasswordNoHash.path;
+    allowedShares = ["data"];
   };
+
+  system.borgbackup.daily.extraPaths = [
+    "/opt/data"
+  ];
 
   homelab = {
     enable = true;
@@ -141,7 +142,7 @@ in {
         ];
 
         ignoreEmptyHostKeys = true;
-        authorizedKeys = [publicKey];
+        authorizedKeys = publicKeys;
       };
     };
   };
@@ -161,24 +162,6 @@ in {
       efi.canTouchEfiVariables = true;
       systemd-boot.enable = true;
     };
-  };
-
-  services.samba = {
-    enable = true;
-    shares = {
-      data = {
-        comment = "main data pool";
-        browseable = false;
-        readOnly = false;
-        createMask = "0700";
-        directoryMask = "0700";
-        validUsers = "dan";
-      };
-    };
-    extraConfig = ''
-      security = user
-      map to guest = bad user
-    '';
   };
 
   system.stateVersion = "23.11";
