@@ -64,6 +64,7 @@ in {
   system.borgbackup.daily = {
     enable = true;
     repo = "ssh://u474421-sub6@u474421-sub6.your-storagebox.de:23/./backups";
+    discordNotificationWebhook = config.sops.secrets.discordWebhookUrl.path;
     extraPaths = [
       "/opt/data"
       "/opt/kubernetes"
@@ -77,6 +78,7 @@ in {
     cnpg.enable = true;
     dragonfly.enable = true;
     paperless.enable = true;
+    atuin.enable = true;
     monitoring = {
       prometheus-stack = {
         enable = true;
