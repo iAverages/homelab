@@ -200,7 +200,7 @@ in {
           namespace = "atuin";
         };
         spec = {
-          selector = {matchLabels = {"cnpg.io/cluster" = "atuin-database";};};
+          selector = {matchLabels = {"cnpg.io/cluster" = "atuin-db";};};
           podMetricsEndpoints = [{port = "metrics";}];
         };
       };

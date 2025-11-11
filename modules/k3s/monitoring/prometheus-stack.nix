@@ -40,61 +40,65 @@ in {
       createNamespace = true;
       values = {
         alertmanager = {
-          enabled = true;
+          extraSecret = {name = "alertmanager-config-secrets";};
           config = {
             receivers = [
-              # TODO: setup
-              # {
-              #   name = "email-receiver";
-              #   email_configs = [
-              #     {
-              #       to = "alerts@danielraybone.com";
-              #       from = "no-reply@danielraybone.com";
-              #       smarthost = "smtp.example.com:587";
-              #       auth_username = {
-              #         name = "alertmanager-email-creds";
-              #         key = "smtp-username";
-              #       };
-              #       auth_password = {
-              #         name = "alertmanager-email-creds";
-              #         key = "smtp-password";
-              #       };
-              #     }
-              #   ];
-              # }
-              (lib.optionals
-                (cfg.discordWebhookUrl != null)
-                {
-                  name = "discord-receiver";
-                  webhook_configs = [
-                    {
-                      url = {
-                        name = "alertmanager-discord-webhook";
-                        key = "url";
-                      };
-                    }
-                  ];
-                })
+              {name = "null";}
+              {
+                name = "default";
+                discord_configs = [
+                  {
+                    webhook_url = "\${DISCORD_WEBHOOK_URL}";
+                    content = "\<@307952129958477824>";
+                  }
+                ];
+
+                # email_configs = [
+                #   {
+                #     to = "kurumi-alerts@danielraybone.com";
+                #     send_resolved = true;
+                #     html = true;
+                #   }
+                # ];
+              }
+            ];
+            global = {resolve_timeout = "5m";};
+            inhibit_rules = [
+              {
+                source_matchers = ["severity = critical"];
+                target_matchers = ["severity =~ warning|info"];
+                equal = ["namespace" "alertname"];
+              }
+              {
+                source_matchers = ["severity = warning"];
+                target_matchers = ["severity = info"];
+                equal = ["namespace" "alertname"];
+              }
+              {
+                source_matchers = ["alertname = InfoInhibitor"];
+                target_matchers = ["severity = info"];
+                equal = ["namespace"];
+              }
+              {target_matchers = ["alertname = InfoInhibitor"];}
             ];
             route = {
-              group_by = ["alertname"];
+              group_by = ["job"];
               group_wait = "30s";
               group_interval = "5m";
-              repeat_interval = "4h";
-              receiver = "default-receiver";
+              repeat_interval = "1h";
+              receiver = "default";
               routes = [
                 {
-                  match_re = {severity = "critical|warning";};
-                  receiver = "email-receiver";
-                }
-                {
-                  match_re = {severity = "critical";};
-                  receiver = "discord-receiver";
+                  receiver = "null";
+                  matchers = ["alertname = \"Watchdog\""];
                 }
               ];
             };
+
+            templates = ["/etc/alertmanager/config/*.tmpl"];
           };
         };
+
         grafana = {
           admin.existingSecret = "grafana-admin-password";
           initChownData.enabled = false;
@@ -131,10 +135,10 @@ in {
         };
       }
       {
-        name = "alertmanager-discord-webhook";
+        name = "alertmanager-config-secrets";
         namespace = "monitoring";
         data = {
-          url = cfg.discordWebhookUrl;
+          DISCORD_WEBHOOK_URL = cfg.discordWebhookUrl;
         };
       }
     ];

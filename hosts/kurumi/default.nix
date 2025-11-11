@@ -34,11 +34,11 @@ in {
       borgRepoKey = {};
       tlsCrt = {
         format = "binary";
-        sopsFile = ./secrets/ssl/dan-local.crt;
+        sopsFile = ./secrets/ssl/dan.local.crt;
       };
       tlsKey = {
         format = "binary";
-        sopsFile = ./secrets/ssl/dan-local.key;
+        sopsFile = ./secrets/ssl/dan.local.key;
       };
     };
     age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
