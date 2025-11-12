@@ -179,6 +179,11 @@ in {
                     value = "Watchdog";
                     matchType = "=";
                   }
+                  {
+                    name = "alertname";
+                    value = "InfoInhibitor";
+                    matchType = "=";
+                  }
                 ];
               }
             ];
