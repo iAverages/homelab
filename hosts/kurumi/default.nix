@@ -30,6 +30,7 @@ in {
       "grafana/username" = {};
       "grafana/password" = {};
       "discordWebhookUrl" = {};
+      mailPassword = {};
       borgRepo = {};
       borgRepoKey = {};
       tlsCrt = {
@@ -85,6 +86,13 @@ in {
         grafanaUser = config.sops.secrets."grafana/username".path;
         grafanaPasswordFile = config.sops.secrets."grafana/password".path;
         discordWebhookUrl = config.sops.secrets.discordWebhookUrl.path;
+        mail = {
+          to = "kurumi-alerts@danielraybone.com";
+          from = "no-reply@danielraybone.com";
+          host = "smtp.protonmail.ch:587";
+          username = "no-reply@danielraybone.com";
+          password = config.sops.secrets.mailPassword.path;
+        };
       };
     };
     pihole = {
