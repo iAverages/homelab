@@ -35,7 +35,7 @@
     checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
 
     deploy.nodes.kurumi = {
-      hostname = "192.168.1.167";
+      hostname = "192.168.1.202";
       profiles.system = {
         user = "root";
         sshUser = "root";
