@@ -56,6 +56,13 @@
           kubectx
           sops
           pkgs.deploy-rs
+          (opentofu.withPlugins (
+            p:
+              with p; [
+                hashicorp_null
+                hashicorp_external
+              ]
+          ))
         ];
       };
     });

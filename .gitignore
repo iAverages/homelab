@@ -1,2 +1,5 @@
 result
 .direnv
+infra/.terraform*
+# temp until I setup s3 state file
+infra/terraform.tfstate* 
