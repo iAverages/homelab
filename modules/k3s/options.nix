@@ -20,6 +20,14 @@ in {
             type = lib.types.str;
             default = "Opaque";
           };
+          labels = lib.mkOption {
+            type = lib.types.nullOr (lib.types.attrsOf lib.types.str);
+            default = null;
+          };
+          annotations = lib.mkOption {
+            type = lib.types.nullOr (lib.types.attrsOf lib.types.str);
+            default = null;
+          };
           data = lib.mkOption {
             type = lib.types.attrsOf lib.types.path;
             description = "Attribute set where keys are secret keys and values are paths to files containing the secret values";
@@ -59,6 +67,18 @@ in {
               metadata:
                 name: ${secret.name}
                 ${lib.optionalString (secret.namespace != null) "namespace: ${secret.namespace}"}
+                ${lib.optionalString (secret.labels != null && lib.isAttrs secret.labels) ''
+                labels:
+                    ${lib.concatStringsSep "\n    " (
+                  lib.mapAttrsToList (key: value: "${key}: ${value}") secret.labels
+                )}
+              ''}
+                ${lib.optionalString (secret.annotations != null && lib.isAttrs secret.annotations) ''
+                annotations:
+                    ${lib.concatStringsSep "\n    " (
+                  lib.mapAttrsToList (key: value: "${key}: ${value}") secret.annotations
+                )}
+              ''}
               type: ${secret.type}
               data:
                 ${lib.concatStringsSep "\n  " (
