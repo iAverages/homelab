@@ -179,6 +179,11 @@ in {
                     value = "Watchdog";
                     matchType = "=";
                   }
+                ];
+              }
+              {
+                receiver = "null";
+                matchers = [
                   {
                     name = "alertname";
                     value = "InfoInhibitor";
