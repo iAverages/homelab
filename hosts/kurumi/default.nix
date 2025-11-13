@@ -96,15 +96,24 @@ in {
         };
       };
     };
+    # garage = {
+    #   enable = false;
+    #   rpcSecret = config.sops.secrets."garage/rpcSecret".path;
+    #   apiHost = "s3.dan.local";
+    #   webHost = "garage.dan.local";
+    # };
     pihole = {
       enable = true;
-      dnsIp = "192.168.1.11";
+      dnsIp = "192.168.1.12";
       domain = "pihole.dan.local";
       passwordFile = config.sops.secrets."pihole/password".path;
     };
-    traefik.tls = {
-      crt = config.sops.secrets.tlsCrt.path;
-      key = config.sops.secrets.tlsKey.path;
+    traefik = {
+      ip = "192.168.1.12";
+      tls = {
+        crt = config.sops.secrets.tlsCrt.path;
+        key = config.sops.secrets.tlsKey.path;
+      };
     };
   };
 

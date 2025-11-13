@@ -6,10 +6,13 @@
   cfg = config.homelab.traefik;
   inherit (lib) types;
 in {
-  options.homelab.traefik.tls = {
-    crt = lib.mkOption {type = types.path;};
-    key = lib.mkOption {type = types.path;};
-    domain = lib.mkOption {type = types.str;};
+  options.homelab.traefik = {
+    tls = {
+      crt = lib.mkOption {type = types.path;};
+      key = lib.mkOption {type = types.path;};
+      domain = lib.mkOption {type = types.str;};
+    };
+    ip = lib.mkOption {type = types.str;};
   };
 
   config.services.k3s = lib.mkIf config.homelab.enable {
@@ -23,6 +26,9 @@ in {
       createNamespace = true;
 
       values = {
+        service = {
+          loadBalancerIP = cfg.ip;
+        };
         ingressRoute = {
           dashboard = {
             enabled = true;
