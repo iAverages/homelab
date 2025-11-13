@@ -115,15 +115,18 @@ in {
     };
     hostId = "b1ba14e8";
     useDHCP = true;
+    interfaces.enp4s0.useDHCP = true;
   };
 
   boot.initrd = {
+    availableKernelModules = ["r8169"];
     systemd = {
       enable = true;
       services = {
         zfs-initrd-unlock = {
           description = "Unlock ZFS pools in initrd";
           after = ["network-online.target" "sshd.service"];
+          before = ["zfs-import-zroot.service"];
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;

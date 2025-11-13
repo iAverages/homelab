@@ -139,7 +139,7 @@
           xattr = "sa";
           acltype = "posixacl";
           encryption = "on";
-          keylocation = "file:///root/zfsDataPoolKey";
+          keylocation = "file:///run/secrets/zfsDataPoolKey";
           keyformat = "raw";
         };
         options = {
