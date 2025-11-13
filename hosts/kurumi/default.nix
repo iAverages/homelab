@@ -33,6 +33,7 @@ in {
       mailPassword = {};
       borgRepo = {};
       borgRepoKey = {};
+      "garage/rpcSecret" = {};
       tlsCrt = {
         format = "binary";
         sopsFile = ./secrets/ssl/dan.local.crt;

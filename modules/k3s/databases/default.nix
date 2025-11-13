@@ -1,3 +1,3 @@
 {
-  imports = [./cnpg.nix ./dragonfly.nix];
+  imports = [./cnpg.nix ./dragonfly.nix ./garage.nix];
 }
