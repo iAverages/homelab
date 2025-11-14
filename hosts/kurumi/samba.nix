@@ -1,3 +1,4 @@
+# TODO: set this up as a module that will auto set user passwords
 {
   config,
   options,
@@ -7,6 +8,11 @@
 }: let
   shares = {
     global = {
+      workgroup = "WORKGROUP";
+      "server string" = "Samba Server";
+      security = "user";
+      "map to guest" = "Bad User";
+      "dns proxy" = "no";
       "pam password change" = "yes";
       "min protocol" = "SMB2";
     };
@@ -15,12 +21,10 @@
       browseable = "yes";
       "read only" = "no";
       "guest ok" = "no";
-      "create mask" = "0644";
-      "directory mask" = "0755";
-      dirPerm = "0770";
-      filePerm = "0660";
-      owner = "root";
-      group = "samba";
+      "valid users" = "dan";
+      "force user" = "dan";
+      "create mask" = "0660";
+      "directory mask" = "0770";
     };
   };
 
