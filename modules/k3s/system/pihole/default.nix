@@ -11,7 +11,7 @@ in {
       type = types.bool;
       default = false;
     };
-    passwordFile = lib.mkOption {type = types.path;};
+    password = lib.mkOption {type = types.str;};
     dns = lib.mkOption {type = types.str;};
     domain = lib.mkOption {type = types.str;};
     dnsIp = lib.mkOption {type = types.str;};
@@ -121,10 +121,12 @@ in {
 
     secrets = [
       {
-        name = "pihole-admin-password";
-        namespace = "pihole";
-        data = {
-          password = cfg.passwordFile;
+        metadata = {
+          name = "pihole-admin-password";
+          namespace = "pihole";
+        };
+        stringData = {
+          password = cfg.password;
         };
       }
     ];

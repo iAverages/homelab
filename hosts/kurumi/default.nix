@@ -1,6 +1,6 @@
 {
   config,
-  lib,
+  pkgs,
   ...
 }: let
   publicKeys = [
@@ -84,15 +84,15 @@ in {
     monitoring = {
       prometheus-stack = {
         enable = true;
-        grafanaUser = config.sops.secrets."grafana/username".path;
-        grafanaPasswordFile = config.sops.secrets."grafana/password".path;
-        discordWebhookUrl = config.sops.secrets.discordWebhookUrl.path;
+        grafanaUser = config.sops.placeholder."grafana/username";
+        grafanaPassword = config.sops.placeholder."grafana/password";
+        discordWebhookUrl = config.sops.placeholder.discordWebhookUrl;
         mail = {
           to = "kurumi-alerts@danielraybone.com";
           from = "no-reply@danielraybone.com";
           host = "smtp.protonmail.ch:587";
           username = "no-reply@danielraybone.com";
-          password = config.sops.secrets.mailPassword.path;
+          password = config.sops.placeholder.mailPassword;
         };
       };
     };
@@ -106,13 +106,13 @@ in {
       enable = true;
       dnsIp = "192.168.1.12";
       domain = "pihole.dan.local";
-      passwordFile = config.sops.secrets."pihole/password".path;
+      password = config.sops.placeholder."pihole/password";
     };
     traefik = {
       ip = "192.168.1.12";
       tls = {
-        crt = config.sops.secrets.tlsCrt.path;
-        key = config.sops.secrets.tlsKey.path;
+        crt = config.sops.placeholder.tlsCrt;
+        key = config.sops.placeholder.tlsKey;
       };
     };
   };

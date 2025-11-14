@@ -111,18 +111,21 @@ in {
     };
     secrets = [
       {
-        name = "garage-rpc-secret";
-        namespace = "garage";
-        data = {
+        metadata = {
+          name = "garage-rpc-secret";
+          namespace = "garage";
+
+          # "trick" the helm chart into thinking it created the secret
+          annotations = {
+            "meta.helm.sh/release-name" = "garage";
+            "meta.helm.sh/release-namespace" = "garage";
+          };
+          labels = {
+            "app.kubernetes.io/managed-by" = "Helm";
+          };
+        };
+        stringData = {
           rpcSecret = cfg.rpcSecret;
-        };
-        # "trick" the helm chart into thinking it created the secret
-        annotations = {
-          "meta.helm.sh/release-name" = "garage";
-          "meta.helm.sh/release-namespace" = "garage";
-        };
-        labels = {
-          "app.kubernetes.io/managed-by" = "Helm";
         };
       }
     ];

@@ -15,8 +15,8 @@ in {
       type = types.str;
       default = "admin";
     };
-    grafanaPasswordFile = lib.mkOption {
-      type = types.path;
+    grafanaPassword = lib.mkOption {
+      type = types.str;
     };
     grafanaDomain = lib.mkOption {
       type = types.nullOr types.str;
@@ -44,7 +44,7 @@ in {
         type = types.str;
       };
       password = lib.mkOption {
-        type = types.path;
+        type = types.str;
       };
     };
   };
@@ -199,17 +199,21 @@ in {
 
     secrets = [
       {
-        name = "grafana-admin-password";
-        namespace = "monitoring";
-        data = {
+        metadata = {
+          name = "grafana-admin-password";
+          namespace = "monitoring";
+        };
+        stringData = {
           admin-user = cfg.grafanaUser;
-          admin-password = cfg.grafanaPasswordFile;
+          admin-password = cfg.grafanaPassword;
         };
       }
       {
-        name = "alertmanager-config-secrets";
-        namespace = "monitoring";
-        data = {
+        metadata = {
+          name = "alertmanager-config-secrets";
+          namespace = "monitoring";
+        };
+        stringData = {
           DISCORD_WEBHOOK_URL = cfg.discordWebhookUrl;
           mailPassword = cfg.mail.password;
         };

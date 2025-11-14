@@ -1,7 +1,20 @@
+# Example:
+#
+# services.k3s.secrets = [
+#   {
+#     metadata = {
+#       name = "grafana-secret";
+#       namespace = "monitoring";
+#     };
+#     stringData = {
+#       username = "admin";
+#       password = config.sops.placeholder."grafana/password";
+#     };
+#   }
+# ];
 {
-  config,
   lib,
-  pkgs,
+  config,
   ...
 }: let
   cfg = config.services.k3s;
@@ -14,23 +27,16 @@ in {
             type = lib.types.bool;
             default = true;
           };
-          name = lib.mkOption {type = lib.types.str;};
-          namespace = lib.mkOption {type = lib.types.nullOr lib.types.str;};
           type = lib.mkOption {
             type = lib.types.str;
             default = "Opaque";
           };
-          labels = lib.mkOption {
-            type = lib.types.nullOr (lib.types.attrsOf lib.types.str);
-            default = null;
+          metadata = {
+            name = lib.mkOption {type = lib.types.str;};
+            namespace = lib.mkOption {type = lib.types.nullOr lib.types.str;};
           };
-          annotations = lib.mkOption {
-            type = lib.types.nullOr (lib.types.attrsOf lib.types.str);
-            default = null;
-          };
-          data = lib.mkOption {
-            type = lib.types.attrsOf lib.types.path;
-            description = "Attribute set where keys are secret keys and values are paths to files containing the secret values";
+          stringData = lib.mkOption {
+            type = lib.types.attrsOf lib.types.str;
           };
         };
       }
@@ -38,58 +44,22 @@ in {
     default = [];
   };
 
-  config = lib.mkMerge [
-    (lib.mkIf (builtins.length cfg.secrets > 0) {
-      systemd.services = lib.listToAttrs (
-        lib.map (secret: {
-          name = "k3s-secret-${secret.name}";
-          value = {
-            inherit (secret) enable;
-            description = "k3s secret for ${secret.name}";
-            after = ["k3s.service"];
-            requires = ["k3s.service"];
-            wantedBy = ["multi-user.target"];
-
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-            };
-
-            environment.KUBECONFIG = "/etc/rancher/k3s/k3s.yaml";
-            script = ''
-              ${lib.optionalString (secret.namespace != null) ''
-                ${pkgs.kubectl}/bin/kubectl get namespace ${secret.namespace} >/dev/null 2>&1 || \
-                ${pkgs.kubectl}/bin/kubectl create namespace ${secret.namespace}
-              ''}
-              ${pkgs.kubectl}/bin/kubectl apply -f - <<EOF
-              apiVersion: v1
-              kind: Secret
-              metadata:
-                name: ${secret.name}
-                ${lib.optionalString (secret.namespace != null) "namespace: ${secret.namespace}"}
-                ${lib.optionalString (secret.labels != null && lib.isAttrs secret.labels) ''
-                labels:
-                    ${lib.concatStringsSep "\n    " (
-                  lib.mapAttrsToList (key: value: "${key}: ${value}") secret.labels
-                )}
-              ''}
-                ${lib.optionalString (secret.annotations != null && lib.isAttrs secret.annotations) ''
-                annotations:
-                    ${lib.concatStringsSep "\n    " (
-                  lib.mapAttrsToList (key: value: "${key}: ${value}") secret.annotations
-                )}
-              ''}
-              type: ${secret.type}
-              data:
-                ${lib.concatStringsSep "\n  " (
-                lib.mapAttrsToList (key: path: "${key}: $(${pkgs.coreutils}/bin/cat ${path} | ${pkgs.coreutils}/bin/base64 -w 0)") secret.data
-              )}
-              EOF
-            '';
+  config = {
+    sops.templates = lib.listToAttrs (
+      map (secret: {
+        name = "${secret.metadata.name}";
+        value = {
+          content = builtins.toJSON {
+            apiVersion = "v1";
+            kind = "Secret";
+            inherit (secret) type;
+            inherit (secret) metadata;
+            inherit (secret) stringData;
           };
-        })
-        cfg.secrets
-      );
-    })
-  ];
+          path = "/var/lib/rancher/k3s/server/manifests/${secret.metadata.name}.json";
+        };
+      })
+      cfg.secrets
+    );
+  };
 }

@@ -8,8 +8,8 @@
 in {
   options.homelab.traefik = {
     tls = {
-      crt = lib.mkOption {type = types.path;};
-      key = lib.mkOption {type = types.path;};
+      crt = lib.mkOption {type = types.str;};
+      key = lib.mkOption {type = types.str;};
       domain = lib.mkOption {type = types.str;};
     };
     ip = lib.mkOption {type = types.str;};
@@ -80,9 +80,11 @@ in {
 
     secrets = [
       {
-        name = "dan-local-cert";
-        namespace = "traefik";
-        data = {
+        metadata = {
+          name = "dan-local-cert";
+          namespace = "traefik";
+        };
+        stringData = {
           "tls.crt" = cfg.tls.crt;
           "tls.key" = cfg.tls.key;
         };
