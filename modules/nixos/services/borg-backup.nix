@@ -5,10 +5,6 @@
   ...
 }: let
   cfg = config.system.borgbackup.daily;
-
-  bandwidthLimiter = pkgs.writeShellScriptBin "bandwidth-limiter" ''
-    pv --quiet --rate-limit 20971520 | "$@"
-  '';
 in {
   options.system.borgbackup.daily = {
     enable = lib.mkEnableOption "borg-daily-backup";
@@ -67,7 +63,6 @@ in {
       "/root/sorted"
     ];
 
-    # environment.BORG_RSH = "${bandwidthLimiter}/bin/bandwidth-limiter ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no";
     environment.BORG_RSH = "ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no";
 
     persistentTimer = true;
@@ -221,11 +216,11 @@ in {
 
   config.environment.systemPackages = lib.mkIf config.system.borgbackup.daily.enable [
     (pkgs.writeShellScriptBin
-      "borgWrapped"
+      "backup"
       ''
         BORG_RSH="ssh -i /root/.ssh/id_ed25519 -o StrictHostKeyChecking=no" \
         BORG_PASSCOMMAND="cat ${config.sops.secrets.borgRepoKey.path}" \
-        BORG_REPO="ssh://u474421-sub6@u474421-sub6.your-storagebox.de:23/./backups" \
+        BORG_REPO="${cfg.repo}" \
         BORG_REMOTE_PATH="borg-1.4" \
         borg "$@"
       '')
