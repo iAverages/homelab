@@ -34,7 +34,7 @@ in {
         DNS2 = "1.0.0.1";
         dnsmasq = {
           customDnsEntries = [
-            "address=/dan.local/192.168.1.11"
+            "address=/${config.homelab.domain}/192.168.1.11"
           ];
         };
         admin = {

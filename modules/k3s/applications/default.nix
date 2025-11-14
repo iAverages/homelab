@@ -1,6 +1,7 @@
 {
   imports = [
     ./atuin
+    ./glance
     ./paperless
   ];
 }

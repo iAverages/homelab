@@ -81,6 +81,7 @@ in {
     dragonfly.enable = true;
     paperless.enable = true;
     atuin.enable = true;
+    glance.enable = true;
     monitoring = {
       prometheus-stack = {
         enable = true;

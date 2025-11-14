@@ -10,7 +10,13 @@ in {
     tls = {
       crt = lib.mkOption {type = types.str;};
       key = lib.mkOption {type = types.str;};
-      domain = lib.mkOption {type = types.str;};
+    };
+    domain = lib.mkOption {
+      type = types.nullOr types.str;
+      default =
+        if config.homelab.domain != null
+        then "traefik.${config.homelab.domain}"
+        else null;
     };
     ip = lib.mkOption {type = types.str;};
   };
@@ -29,13 +35,17 @@ in {
         service = {
           loadBalancerIP = cfg.ip;
         };
-        ingressRoute = {
-          dashboard = {
-            enabled = true;
-            matchRule = "Host(`traefik.dan.local`)";
-            entryPoints = ["websecure"];
-          };
-        };
+        ingressRoute =
+          if cfg.domain != null
+          then {
+            dashboard = {
+              enabled = true;
+              matchRule = "Host(`${cfg.domain}`)";
+              entryPoints = ["websecure"];
+            };
+          }
+          else {};
+
         ports = {
           web = {
             redirections = {
