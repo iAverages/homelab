@@ -47,9 +47,6 @@
                       "/" = {
                         hide = false;
                       };
-                      "/opt/data" = {
-                        hide = false;
-                      };
                     };
                   }
                 ];
