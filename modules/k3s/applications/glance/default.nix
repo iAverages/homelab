@@ -82,6 +82,9 @@
                     {
                       title = "traefik";
                       url = "https://${config.homelab.traefik.domain}";
+                      # cannot ping dashboard internally and dns will not resolve
+                      # if traefik is down this page wont load anyway :moyai:
+                      "check-url" = "http://prometheus-stack-grafana.monitoring.svc.cluster.local:80";
                       icon = "di:traefik";
                     }
                     {
