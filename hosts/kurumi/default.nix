@@ -42,6 +42,10 @@ in {
         format = "binary";
         sopsFile = ./secrets/ssl/dan.local.key;
       };
+      "mie/b2/bucketId" = {};
+      "mie/b2/keyId" = {};
+      "mie/b2/applicationKey" = {};
+      "mie/discordToken" = {};
     };
     age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
   };
@@ -115,6 +119,19 @@ in {
         crt = config.sops.placeholder.tlsCrt;
         key = config.sops.placeholder.tlsKey;
       };
+    };
+    mie = {
+      enable = true;
+      b2 = {
+        url = "s3.us-west-002.backblazeb2.com0020d4a4136a0090000000031";
+        bucketId = config.sops.placeholder."mie/b2/bucketId";
+        bucketPathPrefix = "uploads/mie";
+        bucketName = "dancdn";
+        keyId = config.sops.placeholder."mie/b2/keyId";
+        applicationKey = config.sops.placeholder."mie/b2/applicationKey";
+      };
+      discordToken = config.sops.placeholder."mie/discordToken";
+      cdnUrl = "https://cdn.avrg.dev/";
     };
   };
 
