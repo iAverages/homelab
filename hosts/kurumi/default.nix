@@ -46,6 +46,8 @@ in {
       "mie/b2/keyId" = {};
       "mie/b2/applicationKey" = {};
       "mie/discordToken" = {};
+      "vaultwarden/pushNotifications/installationId" = {};
+      "vaultwarden/pushNotifications/installationKey" = {};
     };
     age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
   };
@@ -84,7 +86,6 @@ in {
     cnpg.enable = true;
     dragonfly.enable = true;
     paperless.enable = true;
-    atuin.enable = true;
     glance.enable = true;
     monitoring = {
       prometheus-stack = {
@@ -132,6 +133,20 @@ in {
       };
       discordToken = config.sops.placeholder."mie/discordToken";
       cdnUrl = "https://cdn.avrg.dev/";
+    };
+    vaultwarden = {
+      enable = true;
+      pushNotifications = {
+        installationId = config.sops.placeholder."vaultwarden/pushNotifications/installationId";
+        installationKey = config.sops.placeholder."vaultwarden/pushNotifications/installationKey";
+      };
+      smtp = {
+        from = "no-reply@danielraybone.com";
+        host = "smtp.protonmail.ch";
+        port = "587";
+        username = "no-reply@danielraybone.com";
+        password = config.sops.placeholder.mailPassword;
+      };
     };
   };
 

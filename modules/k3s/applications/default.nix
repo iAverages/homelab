@@ -4,5 +4,6 @@
     ./glance
     ./mie
     ./paperless
+    ./vaultwarden
   ];
 }
