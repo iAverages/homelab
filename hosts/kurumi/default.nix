@@ -36,11 +36,11 @@ in {
       "garage/rpcSecret" = {};
       tlsCrt = {
         format = "binary";
-        sopsFile = ./secrets/ssl/dan.local.crt;
+        sopsFile = ./secrets/ssl/dan-lan.pem;
       };
       tlsKey = {
         format = "binary";
-        sopsFile = ./secrets/ssl/dan.local.key;
+        sopsFile = ./secrets/ssl/dan-lan-key.pem;
       };
       "mie/b2/bucketId" = {};
       "mie/b2/keyId" = {};
@@ -79,7 +79,7 @@ in {
 
   homelab = {
     enable = true;
-    domain = "dan.local";
+    domain = "dan.lan";
     metallb.addresses = ["192.168.1.11-192.168.1.149"];
     cnpg.enable = true;
     dragonfly.enable = true;
@@ -110,7 +110,7 @@ in {
     pihole = {
       enable = true;
       dnsIp = "192.168.1.12";
-      domain = "pihole.dan.local";
+      domain = "pihole.dan.lan";
       password = config.sops.placeholder."pihole/password";
     };
     traefik = {
