@@ -41,7 +41,7 @@ in {
                   PAPERLESS_OCR_LANGUAGE = "eng";
                   PAPERLESS_PORT = 8000;
                   PAPERLESS_TIME_ZONE = "Europe/London";
-                  PAPERLESS_URL = "https://paperless.dan.local";
+                  PAPERLESS_URL = "https://${cfg.domain}";
                   PAPERLESS_REDIS = "redis://paperless-dragonfly.paperless.svc.cluster.local";
                   PAPERLESS_FILENAME_FORMAT = "{{ `{{ created_year }}/{{ document_type }}/{{ created_year }}-{{ created_month }}-{{ created_day }}_{{ title }}` }}";
                   PAPERLESS_FILENAME_FORMAT_REMOVE_NONE = "true";
@@ -64,7 +64,7 @@ in {
             className = "traefik";
             hosts = [
               {
-                host = "paperless.dan.local";
+                host = cfg.domain;
                 paths = [
                   {
                     path = "/";
