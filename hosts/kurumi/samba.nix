@@ -1,7 +1,6 @@
 # TODO: set this up as a module that will auto set user passwords
 {
   config,
-  options,
   pkgs,
   lib,
   ...
@@ -75,11 +74,6 @@ in {
     default = {};
     description = "Samba user configurations.";
   };
-  # options.samba._each.options.allowedShares = lib.mkOption {
-  #   type = lib.types.attrs;
-  #   default = {};
-  #   description = "Extra options for user, to be interpreted by other modules.";
-  # };
 
   config = {
     services = {
@@ -89,11 +83,6 @@ in {
         openFirewall = true;
         settings =
           sambaShareConfigs;
-
-        # data = {
-        #   path = "/opt/data";
-        #   writable = "true";
-        # };
       };
       # for auto discovery
       avahi = {
@@ -121,10 +110,9 @@ in {
         RemainAfterExit = true;
       };
       script = lib.concatStringsSep "\n" (lib.mapAttrsToList (name: userConfig: ''
-          # The password needs to be passed twice
-          /run/current-system/sw/bin/printf \
-            "$(/run/current-system/sw/bin/cat ${userConfig.passwordFile})\n$(/run/current-system/sw/bin/cat ${userConfig.passwordFile})\n" \
-            | /run/current-system/sw/bin/smbpasswd -sa ${name}
+          ${pkgs.coreutils}/bin/printf \
+          "$(${pkgs.coreutils}/bin/cat ${userConfig.passwordFile})\n$(${pkgs.coreutils}/bin/cat ${userConfig.passwordFile})" \
+          | smbpasswd -s dan
         '')
         sambaEnabledUsers);
     };

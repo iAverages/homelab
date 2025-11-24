@@ -1,8 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: let
+{config, ...}: let
   publicKeys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUqxOzmjOS0TmJkoV9SQtzo2iOt1JzFJsg84KhPshGb me@danielraybone.com"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHMR9EAOYgfjDJ6knl8kepEdIMyYOpX5bQhaXDiybX9W kirsi-wsl@danielraybone.com"
@@ -16,6 +12,26 @@ in {
   ];
 
   users.users.root.openssh.authorizedKeys.keys = publicKeys;
+
+  services.tlp = {
+    enable = true;
+    settings = {
+      CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+      CPU_SCALING_GOVERNOR_ON_AC = "powersave";
+
+      CPU_MIN_PERF_ON_BAT = 0;
+      CPU_MAX_PERF_ON_BAT = 40;
+
+      CPU_MIN_PERF_ON_AC = 0;
+      CPU_MAX_PERF_ON_AC = 40;
+
+      CPU_BOOST_ON_AC = 0;
+      CPU_BOOST_ON_BAT = 0;
+
+      CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
+      CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+    };
+  };
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
@@ -77,6 +93,18 @@ in {
       "/opt/data"
       "/opt/kubernetes"
     ];
+  };
+
+  services.external-smtp = {
+    enable = true;
+    smtp = {
+      to = "kurumi-alerts@danielraybone.com";
+      from = "no-reply@danielraybone.com";
+      host = "smtp.protonmail.ch";
+      port = "587";
+      username = "no-reply@danielraybone.com";
+      passwordFile = config.sops.secrets.mailPassword.path;
+    };
   };
 
   homelab = {
@@ -215,6 +243,13 @@ in {
   };
 
   nixpkgs.hostPlatform = "x86_64-linux";
+
+  services.zfs.zed = {
+    enableMail = true;
+    settings = {
+      ZED_EMAIL_ADDR = ["root"];
+    };
+  };
 
   boot = {
     loader = {
