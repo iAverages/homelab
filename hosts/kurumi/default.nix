@@ -38,7 +38,7 @@ in {
   };
 
   powerManagement.powerUpCommands = with pkgs; ''
-    ${hdparm}/bin/hdparm -S 1500 -B 127 $(${util-linux}/bin/lsblk -dnp -o name,rota | ${gnugrep}/bin/grep \'.*\\s1\' | ${coreutils}/bin/cut -d \' \' -f 1)
+    ${hdparm}/bin/hdparm -S 60 $(${util-linux}/bin/lsblk -dnp -o name,rota | ${gnugrep}/bin/grep \'.*\\s1\' | ${coreutils}/bin/cut -d \' \' -f 1)
   '';
 
   sops = {
