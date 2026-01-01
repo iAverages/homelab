@@ -1,4 +1,8 @@
-{config, ...}: let
+{
+  config,
+  pkgs,
+  ...
+}: let
   publicKeys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUqxOzmjOS0TmJkoV9SQtzo2iOt1JzFJsg84KhPshGb me@danielraybone.com"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHMR9EAOYgfjDJ6knl8kepEdIMyYOpX5bQhaXDiybX9W kirsi-wsl@danielraybone.com"
@@ -32,6 +36,10 @@ in {
       CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
     };
   };
+
+  powerManagement.powerUpCommands = with pkgs; ''
+    ${hdparm}/bin/hdparm -S 1500 -B 127 $(${util-linux}/bin/lsblk -dnp -o name,rota | ${gnugrep}/bin/grep \'.*\\s1\' | ${coreutils}/bin/cut -d \' \' -f 1)
+  '';
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
@@ -78,6 +86,7 @@ in {
     description = "dan";
     extraGroups = ["networkmanager" "wheel"];
     hashedPasswordFile = config.sops.secrets.danPassword.path;
+    openssh.authorizedKeys.keys = publicKeys;
   };
 
   samba.users.dan = {
