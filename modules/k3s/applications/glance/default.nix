@@ -56,23 +56,23 @@
           {
             size = "full";
             widgets = [
-              {
-                type = "monitor";
-                cache = "1m";
-                title = "Applications";
-                sites = [
-                  (
-                    lib.optionals
-                    (config.homelab.pihole.enable && config.homelab.pihole.domain != null)
-                    {
-                      title = "paperless";
-                      url = "https://${config.homelab.paperless.domain}";
-                      "check-url" = "http://paperless.paperless.svc.cluster.local:8000";
-                      icon = "di:paperless-ngx";
-                    }
-                  )
-                ];
-              }
+              # {
+              #   type = "monitor";
+              #   cache = "1m";
+              #   title = "Applications";
+              #   sites = [
+              #     (
+              #       lib.optionals
+              #       (config.homelab.paperless.enable && config.homelab.paperless.domain != null)
+              #       {
+              #         title = "paperless";
+              #         url = "https://${config.homelab.paperless.domain}";
+              #         "check-url" = "http://paperless.paperless.svc.cluster.local:8000";
+              #         icon = "di:paperless-ngx";
+              #       }
+              #     )
+              #   ];
+              # }
               {
                 type = "monitor";
                 cache = "1m";
@@ -93,16 +93,16 @@
                       "check-url" = "http://prometheus-stack-grafana.monitoring.svc.cluster.local:80";
                       icon = "di:grafana";
                     }
-                    (
-                      lib.optionals
-                      (config.homelab.pihole.enable && config.homelab.pihole.domain != null)
-                      {
-                        title = "pi-hole";
-                        url = "https://${config.homelab.pihole.domain}/admin";
-                        "check-url" = "http://pihole-web.pihole.svc.cluster.local:80/admin";
-                        icon = "di:pi-hole";
-                      }
-                    )
+                    # (
+                    #   lib.optionals
+                    #   (config.homelab.pihole.enable && config.homelab.pihole.domain != null)
+                    #   {
+                    #     title = "pi-hole";
+                    #     url = "https://${config.homelab.pihole.domain}/admin";
+                    #     "check-url" = "http://pihole-web.pihole.svc.cluster.local:80/admin";
+                    #     icon = "di:pi-hole";
+                    #   }
+                    # )
                   ]
                   ++ cfg.additionalSystemServices;
               }

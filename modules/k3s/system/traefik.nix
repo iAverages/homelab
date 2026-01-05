@@ -4,6 +4,7 @@
   ...
 }: let
   cfg = config.homelab.traefik;
+  monitoringEnabled = config.homelab.monitoring.prometheus-stack.enable;
   inherit (lib) types;
 in {
   options.homelab.traefik = {
@@ -18,7 +19,7 @@ in {
         then "traefik.${config.homelab.domain}"
         else null;
     };
-    ip = lib.mkOption {type = types.str;};
+    ip = lib.mkOption {type = types.nullOr types.str;};
   };
 
   config.services.k3s = lib.mkIf config.homelab.enable {
@@ -32,9 +33,12 @@ in {
       createNamespace = true;
 
       values = {
-        service = {
-          loadBalancerIP = cfg.ip;
-        };
+        # service =
+        # if cfg.ip != null
+        # then {
+        #   loadBalancerIP = cfg.ip;
+        # }
+        # else {};
         ingressRoute =
           if cfg.domain != null
           then {
@@ -56,17 +60,24 @@ in {
               };
             };
           };
+          websecure =
+            if cfg.ip == null
+            then {nodePort = 443;}
+            else {};
         };
-        metrics = {
-          prometheus = {
-            service = {
-              enabled = true;
+        metrics =
+          if monitoringEnabled
+          then {
+            prometheus = {
+              service = {
+                enabled = true;
+              };
+              serviceMonitor = {
+                enabled = true;
+              };
             };
-            serviceMonitor = {
-              enabled = true;
-            };
-          };
-        };
+          }
+          else {};
         ingressClass = {
           name = "traefik";
         };
@@ -81,7 +92,7 @@ in {
         tlsStore = {
           default = {
             defaultCertificate = {
-              secretName = "dan-local-cert";
+              secretName = "traefik-cert";
             };
           };
         };
@@ -91,7 +102,7 @@ in {
     secrets = [
       {
         metadata = {
-          name = "dan-local-cert";
+          name = "traefik-cert";
           namespace = "traefik";
         };
         stringData = {

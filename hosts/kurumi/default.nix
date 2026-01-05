@@ -50,6 +50,9 @@ in {
       };
       danPassword = {};
       danPasswordNoHash = {};
+      tailscaleAuthKey = {};
+      tailscaleClientId = {};
+      tailscaleClientSecret = {};
       "pihole/password" = {};
       "grafana/username" = {};
       "grafana/password" = {};
@@ -74,6 +77,11 @@ in {
       "vaultwarden/pushNotifications/installationKey" = {};
     };
     age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
+  };
+
+  services.tailscale = {
+    enable = true;
+    authKeyFile = config.sops.secrets.tailscaleAuthKey.path;
   };
 
   nix.settings.trusted-users = [
@@ -119,11 +127,19 @@ in {
   homelab = {
     enable = true;
     domain = "dan.lan";
+    metallb.enable = true;
     metallb.addresses = ["192.168.1.11-192.168.1.149"];
     cnpg.enable = true;
     dragonfly.enable = true;
     paperless.enable = true;
     glance.enable = true;
+    tailscale = {
+      enable = true;
+      oauth = {
+        clientId = config.sops.placeholder.tailscaleClientId;
+        clientSecret = config.sops.placeholder.tailscaleClientSecret;
+      };
+    };
     monitoring = {
       prometheus-stack = {
         enable = true;
@@ -190,7 +206,9 @@ in {
   networking = {
     hostName = "kurumi";
     firewall = {
+      trustedInterfaces = ["tailscale0"];
       allowedTCPPorts = [22 443 53 6443];
+      allowedUDPPorts = [config.services.tailscale.port];
     };
     hostId = "b1ba14e8";
     useDHCP = true;

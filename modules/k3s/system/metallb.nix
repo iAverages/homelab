@@ -2,13 +2,19 @@
   lib,
   config,
   ...
-}: {
-  options.homelab.metallb.addresses = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
-    default = [];
+}: let
+  cfg = config.homelab.metallb;
+in {
+  options.homelab.metallb = {
+    enable = lib.mkEnableOption "metallb";
+    addresses = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+    };
   };
 
-  config.services.k3s.autoDeployCharts.metallb = {
+  # config.services.k3s = lib.mkIf cfg.enable {
+  config.services.k3s.autoDeployCharts.metallb = lib.mkIf cfg.enable {
     name = "metallb";
     repo = "https://metallb.github.io/metallb";
     version = "0.15.2";
