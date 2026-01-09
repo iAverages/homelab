@@ -45,8 +45,8 @@ in {
                   PAPERLESS_REDIS = "redis://paperless-dragonfly.paperless.svc.cluster.local";
                   PAPERLESS_FILENAME_FORMAT = "{{ `{{ created_year }}/{{ document_type }}/{{ created_year }}-{{ created_month }}-{{ created_day }}_{{ title }}` }}";
                   PAPERLESS_FILENAME_FORMAT_REMOVE_NONE = "true";
-                  PAPERLESS_CONSUMER_ENABLE_BARCODES = 1;
-                  PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE = 1;
+                  PAPERLESS_CONSUMER_ENABLE_BARCODES = "true";
+                  PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE = "true";
                 };
               };
             };
