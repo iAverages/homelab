@@ -2,20 +2,12 @@
   config,
   pkgs,
   ...
-}: let
-  publicKeys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUqxOzmjOS0TmJkoV9SQtzo2iOt1JzFJsg84KhPshGb me@danielraybone.com"
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHMR9EAOYgfjDJ6knl8kepEdIMyYOpX5bQhaXDiybX9W kirsi-wsl@danielraybone.com"
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDjFLBWuH4DV86tNNmGP2ADurDLrLPtO3bCX5U6YElxs izanami@danielraybone.com"
-  ];
-in {
+}: {
   imports = [
     ./disko.nix
     ./hardware-configuration.nix
     ./samba.nix
   ];
-
-  users.users.root.openssh.authorizedKeys.keys = publicKeys;
 
   services.tlp = {
     enable = true;
@@ -94,7 +86,6 @@ in {
     description = "dan";
     extraGroups = ["networkmanager" "wheel"];
     hashedPasswordFile = config.sops.secrets.danPassword.path;
-    openssh.authorizedKeys.keys = publicKeys;
   };
 
   samba.users.dan = {
@@ -106,6 +97,8 @@ in {
     enable = true;
     repo = "ssh://u474421-sub6@u474421-sub6.your-storagebox.de:23/./backups";
     discordNotificationWebhook = config.sops.secrets.discordWebhookUrl.path;
+    borgRemotePath = "borg-1.4";
+    uploadRatelimit = "7168";
     extraPaths = [
       "/opt/data"
       "/opt/kubernetes"
@@ -256,18 +249,11 @@ in {
         ];
 
         ignoreEmptyHostKeys = true;
-        authorizedKeys = publicKeys;
       };
     };
   };
 
-  services.openssh = {
-    enable = true;
-    settings = {
-      PermitRootLogin = "prohibit-password";
-      PasswordAuthentication = false;
-    };
-  };
+  services.openssh.enable = true;
 
   nixpkgs.hostPlatform = "x86_64-linux";
 
@@ -281,7 +267,12 @@ in {
   boot = {
     loader = {
       efi.canTouchEfiVariables = true;
-      systemd-boot.enable = true;
+      systemd-boot.enable = false;
+      grub = {
+        enable = true;
+        devices = ["nodev"];
+        efiSupport = false;
+      };
     };
   };
 

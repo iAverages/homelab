@@ -2,12 +2,11 @@
   description = "homelab";
 
   outputs = {
-    self,
     nixpkgs,
     disko,
     sops-nix,
-    deploy-rs,
     flake-utils,
+    comin,
     ...
   } @ inputs: let
     hostsPath = ./hosts;
@@ -25,25 +24,15 @@
         modules = [
           sops-nix.nixosModules.sops
           disko.nixosModules.disko
+          comin.nixosModules.comin
+
+          ./modules/nixos/system/nix.nix
           ./hosts/${hostname}
           ./modules
         ];
       };
   in {
     nixosConfigurations = nixpkgs.lib.genAttrs hosts mkHost;
-
-    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
-
-    deploy.nodes.kurumi = {
-      hostname = "192.168.1.202";
-      profiles.system = {
-        user = "root";
-        sshUser = "root";
-        # interactiveSudo = true;
-        remoteBuild = true;
-        path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.kurumi;
-      };
-    };
 
     devShells = flake-utils.lib.eachDefaultSystemMap (system: let
       pkgs = import nixpkgs {
@@ -55,7 +44,6 @@
           kubectl
           kubectx
           sops
-          pkgs.deploy-rs
           (opentofu.withPlugins (
             p:
               with p; [
@@ -71,13 +59,16 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    deploy-rs.url = "github:serokell/deploy-rs";
     disko = {
       url = "github:nix-community/disko/latest";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-nix = {
       url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    comin = {
+      url = "github:nlewo/comin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

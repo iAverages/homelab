@@ -17,9 +17,20 @@ in {
       default = [];
       description = "Extra paths to include in the daily BorgBackup job.";
     };
+    extraExclude = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "Extra paths to exclude in the daily BorgBackup job.";
+    };
     discordNotificationWebhook = lib.mkOption {
       type = lib.types.str;
       default = "";
+    };
+    borgRemotePath = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+    };
+    uploadRatelimit = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
     };
   };
 
@@ -31,14 +42,16 @@ in {
     startAt = "daily";
     # doInit = true;
 
-    extraArgs = [
-      # https://docs.hetzner.com/storage/storage-box/access/access-ssh-rsync-borg#borgbackup
-      "--remote-path=borg-1.4"
-      "--debug"
-    ];
+    extraArgs =
+      lib.lists.optionals (cfg.borgRemotePath
+        != null) ["--remote-path=${cfg.borgRemotePath}"]
+      ++ [
+        "--debug"
+      ];
 
-    extraCreateArgs = [
-      "--upload-ratelimit=7168"
+    extraCreateArgs = lib.lists.optionals (cfg.uploadRatelimit
+      != null) [
+      "--upload-ratelimit=${cfg.uploadRatelimit}"
     ];
 
     paths = lib.mkMerge [

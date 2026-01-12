@@ -2,19 +2,13 @@
   config,
   pkgs,
   ...
-}: let
-  publicKeys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUqxOzmjOS0TmJkoV9SQtzo2iOt1JzFJsg84KhPshGb me@danielraybone.com"
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHMR9EAOYgfjDJ6knl8kepEdIMyYOpX5bQhaXDiybX9W kirsi-wsl@danielraybone.com"
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDjFLBWuH4DV86tNNmGP2ADurDLrLPtO3bCX5U6YElxs izanami@danielraybone.com"
-  ];
-in {
+}: {
   imports = [
     ./disko.nix
     ./hardware-configuration.nix
   ];
 
-  users.users.root.openssh.authorizedKeys.keys = publicKeys;
+  # users.users.root.openssh.authorizedKeys.keys = pkgs.lib.allPublicKeys;
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
@@ -36,23 +30,7 @@ in {
     age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
   };
 
-  services.tailscale = {
-    enable = true;
-    authKeyFile = config.sops.secrets.tailscaleAuthKey.path;
-  };
-
-  nix.settings.trusted-users = [
-    "root"
-    "@wheel"
-  ];
-
-  users.users.dan = {
-    isNormalUser = true;
-    description = "dan";
-    extraGroups = ["networkmanager" "wheel"];
-    hashedPasswordFile = config.sops.secrets.danPassword.path;
-    openssh.authorizedKeys.keys = publicKeys;
-  };
+  dan = true;
 
   homelab = {
     enable = true;
@@ -77,18 +55,66 @@ in {
 
   networking = {
     hostName = "eu02";
+    useDHCP = false;
+    useNetworkd = true;
     firewall = {
+      enable = true;
       allowedTCPPorts = [22 443 6443];
     };
-    # hostId = "b1ba14e8";
-    useDHCP = true;
   };
 
-  services.openssh = {
+  systemd.network = {
     enable = true;
-    settings = {
-      PermitRootLogin = "prohibit-password";
-      PasswordAuthentication = false;
+
+    networks."10-wan" = {
+      matchConfig.Name = "en*";
+
+      address = [
+        "46.224.203.151/32"
+        "2a01:4f8:1c19:ebd::/64"
+      ];
+
+      routes = [
+        {
+          Gateway = "172.31.1.1";
+          GatewayOnLink = true;
+        }
+        {
+          Gateway = "fe80::1";
+        }
+      ];
+
+      dns = [
+        "185.12.64.1"
+        "185.12.64.2"
+        "2a01:4ff:ff00::add:1"
+        "2a01:4ff:ff00::add:2"
+      ];
+
+      networkConfig = {
+        IPv6AcceptRA = false;
+      };
+
+      linkConfig = {
+        RequiredForOnline = "routable";
+      };
+    };
+  };
+
+  services = {
+    config-git-deploy.enable = true;
+
+    openssh = {
+      enable = true;
+      settings = {
+        PermitRootLogin = "prohibit-password";
+        PasswordAuthentication = false;
+      };
+    };
+
+    tailscale = {
+      enable = true;
+      authKeyFile = config.sops.secrets.tailscaleAuthKey.path;
     };
   };
 
@@ -96,8 +122,12 @@ in {
 
   boot = {
     loader = {
+      grub = {
+        enable = true;
+        devices = ["nodev"];
+      };
       efi.canTouchEfiVariables = true;
-      systemd-boot.enable = true;
+      systemd-boot.enable = false;
     };
   };
 

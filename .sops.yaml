@@ -6,7 +6,7 @@ keys:
   # "servers"
   - &yuki age1z6wr7avkp4d4fkssmfa0daygvzrhyg0gzdgzgq504stqjk3rmf2q5gn9jc
   - &kurumi age1g6tnagjqzwamp6znhcanad9gk3r6qug34ad8fjg32gr938cpdcys7myz7d
-  - &eu02 age1t9nw636wvtum7t4q2s8k4vd465xgezsqju0vwgen45u2cyzhvy6seeqfpv
+  - &eu02 age1vrgyegqfjtf3uq357nhvtscuw2s6n7sheswjj0n0yde905p63ftsn6wmmf
 
 creation_rules:
   - path_regex: hosts/kurumi/secrets/.*

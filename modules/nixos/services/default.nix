@@ -1,3 +1,3 @@
 {
-  imports = [./borg-backup.nix ./external-smtp.nix ./tailscale.nix];
+  imports = [./borg-backup.nix ./comin.nix ./external-smtp.nix ./sane.nix ./ssh.nix ./tailscale.nix];
 }

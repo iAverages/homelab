@@ -1,3 +1,3 @@
 {
-  imports = [./nix.nix ./ntp.nix];
+  imports = [./nix.nix ./ntp.nix ./user.nix];
 }
