@@ -9,6 +9,7 @@
     ./monitoring
     ./system
     ./options.nix
+    ./test.nix
   ];
 
   options = {
