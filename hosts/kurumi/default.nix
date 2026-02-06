@@ -9,23 +9,52 @@
     ./samba.nix
   ];
 
-  services.tlp = {
-    enable = true;
-    settings = {
-      CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-      CPU_SCALING_GOVERNOR_ON_AC = "powersave";
+  services = {
+    tlp = {
+      enable = true;
+      settings = {
+        CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+        CPU_SCALING_GOVERNOR_ON_AC = "powersave";
 
-      CPU_MIN_PERF_ON_BAT = 0;
-      CPU_MAX_PERF_ON_BAT = 40;
+        CPU_MIN_PERF_ON_BAT = 0;
+        CPU_MAX_PERF_ON_BAT = 40;
 
-      CPU_MIN_PERF_ON_AC = 0;
-      CPU_MAX_PERF_ON_AC = 40;
+        CPU_MIN_PERF_ON_AC = 0;
+        CPU_MAX_PERF_ON_AC = 40;
 
-      CPU_BOOST_ON_AC = 0;
-      CPU_BOOST_ON_BAT = 0;
+        CPU_BOOST_ON_AC = 0;
+        CPU_BOOST_ON_BAT = 0;
 
-      CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
-      CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+        CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
+        CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+      };
+    };
+
+    tailscale = {
+      enable = true;
+      authKeyFile = config.sops.secrets.tailscaleAuthKey.path;
+    };
+
+    external-smtp = {
+      enable = true;
+      smtp = {
+        to = "kurumi-alerts@danielraybone.com";
+        from = "no-reply@danielraybone.com";
+        host = "smtp.protonmail.ch";
+        port = "587";
+        username = "no-reply@danielraybone.com";
+        passwordFile = config.sops.secrets.mailPassword.path;
+      };
+    };
+
+    openssh.enable = true;
+    config-git-deploy.enable = true;
+
+    zfs.zed = {
+      enableMail = true;
+      settings = {
+        ZED_EMAIL_ADDR = ["root"];
+      };
     };
   };
 
@@ -71,23 +100,6 @@
     age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
   };
 
-  services.tailscale = {
-    enable = true;
-    authKeyFile = config.sops.secrets.tailscaleAuthKey.path;
-  };
-
-  nix.settings.trusted-users = [
-    "root"
-    "@wheel"
-  ];
-
-  users.users.dan = {
-    isNormalUser = true;
-    description = "dan";
-    extraGroups = ["networkmanager" "wheel"];
-    hashedPasswordFile = config.sops.secrets.danPassword.path;
-  };
-
   samba.users.dan = {
     passwordFile = config.sops.secrets.danPasswordNoHash.path;
     allowedShares = ["data"];
@@ -103,18 +115,6 @@
       "/opt/data"
       "/opt/kubernetes"
     ];
-  };
-
-  services.external-smtp = {
-    enable = true;
-    smtp = {
-      to = "kurumi-alerts@danielraybone.com";
-      from = "no-reply@danielraybone.com";
-      host = "smtp.protonmail.ch";
-      port = "587";
-      username = "no-reply@danielraybone.com";
-      passwordFile = config.sops.secrets.mailPassword.path;
-    };
   };
 
   homelab = {
@@ -253,16 +253,7 @@
     };
   };
 
-  services.openssh.enable = true;
-
   nixpkgs.hostPlatform = "x86_64-linux";
-
-  services.zfs.zed = {
-    enableMail = true;
-    settings = {
-      ZED_EMAIL_ADDR = ["root"];
-    };
-  };
 
   boot = {
     loader = {
