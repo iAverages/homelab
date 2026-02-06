@@ -7,7 +7,6 @@
   config = lib.mkMerge [
     (lib.mkIf config.services.openssh.enable {
       services.openssh.settings = {
-        PermitRootLogin = lib.mkDefault "no";
         PasswordAuthentication = lib.mkDefault false;
       };
       users.users.root.openssh.authorizedKeys.keys =

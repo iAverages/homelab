@@ -26,6 +26,7 @@ module "system-build" {
 module "deploy" {
   for_each     = local.hosts
   source       = "github.com/nix-community/nixos-anywhere//terraform/nixos-rebuild"
-	nixos_system = module.system-build[each.key].result.out
+  nixos_system = module.system-build[each.key].result.out
   target_host  = each.value.ipv4
+  target_user = each.value.user
 }
