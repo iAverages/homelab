@@ -84,144 +84,168 @@ in {
       if cfg.discordNotificationWebhook != ""
       then ''
         DISCORD_WEBHOOK_URL="$(${pkgs.coreutils}/bin/cat ${cfg.discordNotificationWebhook})"
+        BORG_BIN="${pkgs.borgbackup}/bin/borg"
+        JQ_BIN="${pkgs.jq}/bin/jq"
+        DATE_BIN="${pkgs.coreutils}/bin/date"
+        CUT_BIN="${pkgs.coreutils}/bin/cut"
+        TAIL_BIN="${pkgs.coreutils}/bin/tail"
+        TR_BIN="${pkgs.coreutils}/bin/tr"
+        WC_BIN="${pkgs.coreutils}/bin/wc"
+        UNAME_BIN="${pkgs.coreutils}/bin/uname"
+        NUMFMT_BIN="${pkgs.coreutils}/bin/numfmt"
 
-        # human_readable_size() {
-        #     local size_in_bytes="$1"
-        #     if [[ -z "$size_in_bytes" || "$size_in_bytes" == "null" ]]; then
-        #         ${pkgs.coreutils}/bin/echo "N/A"
-        #     else
-        #         if [[ "$size_in_bytes" =~ ^[0-9]+$ ]]; then
-        #             ${pkgs.coreutils}/bin/numfmt --to=iec-i --suffix=B --format="%8.2f" "$size_in_bytes"
-        #         else
-        #             ${pkgs.coreutils}/bin/echo "N/A"
-        #         fi
-        #     fi
-        # }
-        #
-        # REPO_INFO=$(LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 borgWrapper info "''${extraArgs[@]}" --json "$BORG_REPO" 2>&1)
-        # echo $REPO_INFO
-        # BORG_EXIT_CODE=$?
-        #
-        # if [ "$BORG_EXIT_CODE" -ne 0 ]; then
-        #     ERROR_MESSAGE="Failed to get Borg repository info: $REPO_INFO"
-        #     DISCORD_COLOR="16711680"
-        #     EMBED_TITLE="❌ Borg Backup Status - FAILED"
-        #     EMBED_DESCRIPTION="$ERROR_MESSAGE"
-        #     EMBED_FIELDS="[]"
-        # else
-        #     TOTAL_ORIGINAL_SIZE=$(${pkgs.coreutils}/bin/echo "$REPO_INFO" | ${pkgs.jq}/bin/jq -r '.cache.stats.total_size // "0"')
-        #     TOTAL_COMPRESSED_SIZE=$(${pkgs.coreutils}/bin/echo "$REPO_INFO" | ${pkgs.jq}/bin/jq -r '.cache.stats.total_csize // "0"')
-        #     TOTAL_DEDUP_SIZE=$(${pkgs.coreutils}/bin/echo "$REPO_INFO" | ${pkgs.jq}/bin/jq -r '.cache.stats.unique_size // "0"')
-        #     UNIQUE_CHUNKS=$(${pkgs.coreutils}/bin/echo "$REPO_INFO" | ${pkgs.jq}/bin/jq -r '.cache.stats.total_unique_chunks // "0"')
-        #     TOTAL_CHUNKS=$(${pkgs.coreutils}/bin/echo "$REPO_INFO" | ${pkgs.jq}/bin/jq -r '.cache.stats.total_chunks // "0"')
-        #
-        #     HR_TOTAL_ORIGINAL_SIZE=$(human_readable_size "$TOTAL_ORIGINAL_SIZE")
-        #     HR_TOTAL_COMPRESSED_SIZE=$(human_readable_size "$TOTAL_COMPRESSED_SIZE")
-        #     HR_TOTAL_DEDUP_SIZE=$(human_readable_size "$TOTAL_DEDUP_SIZE")
-        #
-        #     ALL_ARCHIVES_LIST=$(LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 borgWrapper list "''${extraArgs[@]}" --json "$BORG_REPO" 2>&1)
-        #     echo $ALL_ARCHIVES_LIST
-        #     ARCHIVE_LIST_EXIT_CODE=$?
-        #
-        #     if [ "$ARCHIVE_LIST_EXIT_CODE" -eq 0 ]; then
-        #         NUM_ARCHIVES=$(${pkgs.coreutils}/bin/echo "$ALL_ARCHIVES_LIST" | ${pkgs.jq}/bin/jq '.archives | length // 0')
-        #     else
-        #         ${pkgs.coreutils}/bin/echo "Warning: Failed to get full archive list to count archives. Error: $ALL_ARCHIVES_LIST"
-        #         NUM_ARCHIVES="N/A"
-        #     fi
-        #
-        #     LAST_ARCHIVE_LIST_INFO=$(LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 borgWrapper list "''${extraArgs[@]}" --json --last 1 "$BORG_REPO" 2>&1)
-        #     LAST_ARCHIVE_LIST_EXIT_CODE=$?
-        #
-        #     LAST_BACKUP_NAME="N/A"
-        #     LAST_BACKUP_TIMESTAMP="N/A"
-        #     LAST_BACKUP_ORIGINAL_SIZE="N/A"
-        #     LAST_BACKUP_COMPRESSED_SIZE="N/A"
-        #     LAST_BACKUP_DEDUP_SIZE="N/A"
-        #
-        #     if [ "$LAST_ARCHIVE_LIST_EXIT_CODE" -eq 0 ] && [ "$(${pkgs.coreutils}/bin/echo "$LAST_ARCHIVE_LIST_INFO" | ${pkgs.jq}/bin/jq '.archives | length // 0')" -gt 0 ]; then
-        #         LAST_BACKUP_NAME=$(${pkgs.coreutils}/bin/echo "$LAST_ARCHIVE_LIST_INFO" | ${pkgs.jq}/bin/jq -r '.archives[0].name // "N/A"')
-        #         LAST_BACKUP_TIMESTAMP=$(${pkgs.coreutils}/bin/echo "$LAST_ARCHIVE_LIST_INFO" | ${pkgs.jq}/bin/jq -r '.archives[0].time // "N/A"')
-        #
-        #         LAST_ARCHIVE_DETAIL_INFO=$(LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 borgWrapper info "''${extraArgs[@]}" --json "$BORG_REPO::$LAST_BACKUP_NAME" 2>&1)
-        #         LAST_ARCHIVE_DETAIL_EXIT_CODE=$?
-        #
-        #         if [ "$LAST_ARCHIVE_DETAIL_EXIT_CODE" -eq 0 ]; then
-        #             LAST_BACKUP_ORIGINAL_SIZE=$(${pkgs.coreutils}/bin/echo "$LAST_ARCHIVE_DETAIL_INFO" | ${pkgs.jq}/bin/jq -r '.archives[0].stats.original_size // "0"')
-        #             LAST_BACKUP_COMPRESSED_SIZE=$(${pkgs.coreutils}/bin/echo "$LAST_ARCHIVE_DETAIL_INFO" | ${pkgs.jq}/bin/jq -r '.archives[0].stats.compressed_size // "0"')
-        #             LAST_BACKUP_DEDUP_SIZE=$(${pkgs.coreutils}/bin/echo "$LAST_ARCHIVE_DETAIL_INFO" | ${pkgs.jq}/bin/jq -r '.archives[0].stats.deduplicated_size // "0"')
-        #
-        #             HR_LAST_BACKUP_ORIGINAL_SIZE=$(human_readable_size "$LAST_BACKUP_ORIGINAL_SIZE")
-        #             HR_LAST_BACKUP_COMPRESSED_SIZE=$(human_readable_size "$LAST_BACKUP_COMPRESSED_SIZE")
-        #             HR_LAST_BACKUP_DEDUP_SIZE=$(human_readable_size "$LAST_BACKUP_DEDUP_SIZE")
-        #         else
-        #             ${pkgs.coreutils}/bin/echo "Warning: Failed to get detailed info for the last archive '$LAST_BACKUP_NAME'. Error: $LAST_ARCHIVE_DETAIL_INFO"
-        #         fi
-        #     else
-        #         ${pkgs.coreutils}/bin/echo "Warning: Could not get information for the last backup archive. Repository might be empty or inaccessible."
-        #     fi
-        #
-        #     DISCORD_COLOR="3066993"
-        #     EMBED_TITLE="✅ Borg Backup Status - Repository: $(basename "$BORG_REPO")"
-        #     EMBED_DESCRIPTION="Repository statistics and last backup details."
-        #     EMBED_FIELDS="[
-        #         {
-        #             \"name\": \"Total Repository Size\",
-        #             \"value\": \"Original: \`$HR_TOTAL_ORIGINAL_SIZE\`\\nCompressed: \`$HR_TOTAL_COMPRESSED_SIZE\`\\nDeduplicated: \`$HR_TOTAL_DEDUP_SIZE\`\",
-        #             \"inline\": false
-        #         },
-        #         {
-        #             \"name\": \"Total Chunks (Unique/Total)\",
-        #             \"value\": \"\`$UNIQUE_CHUNKS\` / \`$TOTAL_CHUNKS\`\",
-        #             \"inline\": true
-        #         },
-        #         {
-        #             \"name\": \"Number of Archives\",
-        #             \"value\": \"\`$NUM_ARCHIVES\`\",
-        #             \"inline\": true
-        #         },
-        #         {
-        #             \"name\": \"Last Backup Archive\",
-        #             \"value\": \"Name: \`$LAST_BACKUP_NAME\`\\nTimestamp: \`$LAST_BACKUP_TIMESTAMP\`\",
-        #             \"inline\": false
-        #         },
-        #         {
-        #             \"name\": \"Last Backup Archive Size\",
-        #             \"value\": \"Original: \`$HR_LAST_BACKUP_ORIGINAL_SIZE\`\\nCompressed: \`$HR_LAST_BACKUP_COMPRESSED_SIZE\`\\nDeduplicated: \`$HR_LAST_BACKUP_DEDUP_SIZE\`\",
-        #             \"inline\": false
-        #         }
-        #     ]"
-        # fi
+        HOSTNAME="$($UNAME_BIN -n)"
+        COMPLETED_AT="$($DATE_BIN -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-        PAYLOAD=$(${pkgs.jq}/bin/jq -n \
-            --arg title "$EMBED_TITLE" \
-            --arg description "$EMBED_DESCRIPTION" \
-            --arg color "$DISCORD_COLOR" \
-        '{
-          "embeds": [
-            {
-              "title": "Backup complete",
-            }
-          ]
-        }')
-            # --argjson fields "$EMBED_FIELDS" \
+        archive_json="$($BORG_BIN list --json --last 1 "$BORG_REPO" 2>/dev/null || true)"
 
-              # "description": $description,
-              # "color": ($color | tonumber),
-              # "fields": $fields,
+        archive_name="$(printf '%s' "$archive_json" | "$JQ_BIN" -r '.archives[0].archive // "unknown"' 2>/dev/null)"
+        if [ -z "$archive_name" ] || [ "$archive_name" = "null" ]; then
+          archive_name="unknown"
+        fi
 
+        archive_stats_json="$($BORG_BIN info --json "$BORG_REPO::$archive_name" 2>/dev/null || true)"
 
-        ${pkgs.curl}/bin/curl -H "Content-Type: application/json" \
-             -X POST \
-             -d "$PAYLOAD" \
-             "$DISCORD_WEBHOOK_URL"
+        jq_text() {
+          if [ -n "$archive_stats_json" ]; then
+            printf '%s' "$archive_stats_json" | "$JQ_BIN" -r "$1 // \"n/a\"" 2>/dev/null || printf 'n/a'
+          else
+            printf 'n/a'
+          fi
+        }
 
-        if [ "$BORG_EXIT_CODE" -ne 0 ]; then
-            ${pkgs.coreutils}/bin/echo "failed to send discord notification."
-            exit 1
+        archive_host="$(jq_text '.archives[0].hostname')"
+        if [ -z "$archive_host" ] || [ "$archive_host" = "null" ] || [ "$archive_host" = "n/a" ]; then
+          archive_host="$HOSTNAME"
+        fi
+
+        format_duration() {
+          if [ "$1" = "n/a" ] || [ -z "$1" ]; then
+            printf 'n/a'
+          else
+            total_seconds="''${1%%.*}"
+            if [ -z "$total_seconds" ]; then
+              printf 'n/a'
+              return
+            fi
+            hours="$((total_seconds / 3600))"
+            minutes="$(((total_seconds % 3600) / 60))"
+            seconds="$((total_seconds % 60))"
+            if [ "$hours" -gt 0 ]; then
+              printf '%sh %sm %ss' "$hours" "$minutes" "$seconds"
+            elif [ "$minutes" -gt 0 ]; then
+              printf '%sm %ss' "$minutes" "$seconds"
+            else
+              printf '%ss' "$seconds"
+            fi
+          fi
+        }
+
+        duration="$(format_duration "$(jq_text '.archives[0].duration')")"
+
+        format_bytes() {
+          if [ "$1" = "n/a" ] || [ -z "$1" ]; then
+            printf 'n/a'
+          else
+            "$NUMFMT_BIN" --to=iec-i --suffix=B "$1" 2>/dev/null || printf '%s' "$1"
+          fi
+        }
+
+        original_size="$(format_bytes "$(jq_text '.archives[0].stats.original_size')")"
+        compressed_size="$(format_bytes "$(jq_text '.archives[0].stats.compressed_size')")"
+        deduplicated_size="$(format_bytes "$(jq_text '.archives[0].stats.deduplicated_size')")"
+        file_count="$(jq_text '.archives[0].stats.nfiles')"
+        repo_total_size="$(format_bytes "$(jq_text '.cache.stats.total_size')")"
+        repo_deduplicated_size="$(format_bytes "$(jq_text '.cache.stats.unique_size')")"
+
+        archive_count="$($BORG_BIN list --short "$BORG_REPO" 2>/dev/null | $WC_BIN -l | $TR_BIN -d ' ' || true)"
+        if [ -z "$archive_count" ]; then
+          archive_count="n/a"
+        fi
+
+        retention='within 1d, daily 7, weekly 4, monthly 12'
+        backup_size_summary="$(printf 'Original: %s\nCompressed: %s\nDeduplicated: %s' \
+          "$original_size" \
+          "$compressed_size" \
+          "$deduplicated_size")"
+        repo_usage_summary="$(printf 'Archives: %s\nTotal: %s\nUnique: %s' \
+          "$archive_count" \
+          "$repo_total_size" \
+          "$repo_deduplicated_size")"
+        repo_summary="${cfg.repo}"
+        ${lib.optionalString (cfg.borgRemotePath != null) ''
+          repo_summary="$(printf '%s\nRemote path: %s' "$repo_summary" "${cfg.borgRemotePath}")"
+        ''}
+        ${lib.optionalString (cfg.uploadRatelimit != null) ''
+          repo_summary="$(printf '%s\nUpload ratelimit: %s KiB/s' "$repo_summary" "${cfg.uploadRatelimit}")"
+        ''}
+
+        PAYLOAD="$($JQ_BIN -n \
+          --arg title "Backup complete" \
+          --arg description "New Borg archive created for $archive_host" \
+          --arg timestamp "$COMPLETED_AT" \
+          --arg footer "Completed at $COMPLETED_AT" \
+          --arg archive_name "$archive_name" \
+          --arg archive_host "$archive_host" \
+          --arg duration "$duration" \
+          --arg backup_size_summary "$backup_size_summary" \
+          --arg file_count "$file_count" \
+          --arg repo_usage_summary "$repo_usage_summary" \
+          '{
+            embeds: [
+              {
+                title: $title,
+                description: $description,
+                color: 3066993,
+                timestamp: $timestamp,
+                footer: {
+                  text: $footer
+                },
+                fields: [
+                  {
+                    name: "Archive",
+                    value: $archive_name,
+                    inline: false
+                  },
+                  {
+                    name: "Host",
+                    value: $archive_host,
+                    inline: true
+                  },
+                  {
+                    name: "Duration",
+                    value: $duration,
+                    inline: true
+                  },
+                  {
+                    name: "Files",
+                    value: $file_count,
+                    inline: true
+                  },
+                  {
+                    name: "This Backup",
+                    value: $backup_size_summary,
+                    inline: true
+                  },
+                  {
+                    name: "Repo Usage",
+                    value: $repo_usage_summary,
+                    inline: true
+                  }
+                ]
+              }
+            ]
+          }')"
+
+        if ${pkgs.curl}/bin/curl -fsS -H "Content-Type: application/json" \
+          -X POST \
+          -d "$PAYLOAD" \
+          "$DISCORD_WEBHOOK_URL"; then
+          ${pkgs.coreutils}/bin/echo "discord notification sent"
+          exit 0
         else
-            ${pkgs.coreutils}/bin/echo "discord notification sent"
-            exit 0
+          ${pkgs.coreutils}/bin/echo "failed to send discord notification."
+          exit 1
         fi
       ''
       else "";

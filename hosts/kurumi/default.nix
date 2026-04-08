@@ -110,7 +110,7 @@
     repo = "ssh://u474421-sub6@u474421-sub6.your-storagebox.de:23/./backups";
     discordNotificationWebhook = config.sops.secrets.discordWebhookUrl.path;
     borgRemotePath = "borg-1.4";
-    uploadRatelimit = "7168";
+    uploadRatelimit = "16250";
     extraPaths = [
       "/opt/data"
       "/opt/kubernetes"
