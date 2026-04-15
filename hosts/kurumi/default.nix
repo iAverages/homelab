@@ -35,6 +35,8 @@
       authKeyFile = config.sops.secrets.tailscaleAuthKey.path;
     };
 
+    syncthing.enable = true;
+
     external-smtp = {
       enable = true;
       smtp = {
