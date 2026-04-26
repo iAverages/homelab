@@ -116,6 +116,7 @@
     extraPaths = [
       "/opt/data"
       "/opt/kubernetes"
+      "/var/lib/syncthing"
     ];
   };
 
