@@ -3,7 +3,7 @@
   config,
   ...
 }: let
-  cfg = config.homelab.cnpg;
+  cfg = config.homelab.mysql;
   inherit (lib) types;
 in {
   options.homelab.mysql = {
