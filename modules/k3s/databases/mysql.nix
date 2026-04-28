@@ -18,7 +18,7 @@ in {
       name = "mysql-operator";
       repo = "https://mysql.github.io/mysql-operator/";
       version = "2.2.7";
-      hash = "sha256-hkaaSse56AZgLX4ORajhfwjXyifMVbRdWwhOCE6koHU=";
+      hash = "sha256-2I21COh+cCJNU0qTa8vlZEbRpi5BNnRKbMrrhYJjcZE=";
       targetNamespace = "mysql-operator";
       createNamespace = true;
     };
