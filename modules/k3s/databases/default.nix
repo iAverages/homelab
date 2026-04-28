@@ -1,3 +1,3 @@
 {
-  imports = [./cnpg.nix ./dragonfly.nix ./garage.nix];
+  imports = [./cnpg.nix ./dragonfly.nix ./garage.nix ./mysql.nix];
 }

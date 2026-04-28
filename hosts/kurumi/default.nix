@@ -126,6 +126,7 @@
     metallb.enable = true;
     metallb.addresses = ["192.168.1.11-192.168.1.149"];
     cnpg.enable = true;
+    mysql.enable = true;
     dragonfly.enable = true;
     paperless.enable = true;
     glance.enable = true;
