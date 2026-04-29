@@ -83,7 +83,7 @@
       mailPassword = {};
       borgRepo = {};
       borgRepoKey = {};
-      "garage/rpcSecret" = {};
+      "garage/adminToken" = {};
       tlsCrt = {
         format = "binary";
         sopsFile = ./secrets/ssl/dan-lan.pem;
@@ -152,12 +152,21 @@
         };
       };
     };
-    # garage = {
-    #   enable = false;
-    #   rpcSecret = config.sops.secrets."garage/rpcSecret".path;
-    #   apiHost = "s3.dan.local";
-    #   webHost = "garage.dan.local";
-    # };
+
+    forgejo = {
+      enable = true;
+      admin = {
+        username = "dan";
+        email = "forgejo@danielraybone.com";
+        password = config.sops.placeholder.danPasswordNoHash;
+      };
+    };
+
+    garage = {
+      enable = true;
+      adminToken = config.sops.placeholder."garage/adminToken";
+      storage.dataSize = "100Gi";
+    };
     pihole = {
       enable = true;
       dnsIp = "192.168.1.12";
@@ -174,7 +183,7 @@
     mie = {
       enable = true;
       b2 = {
-        url = "s3.us-west-002.backblazeb2.com0020d4a4136a0090000000031";
+        url = "s3.us-west-002.backblazeb2.com";
         bucketId = config.sops.placeholder."mie/b2/bucketId";
         bucketPathPrefix = "uploads/mie";
         bucketName = "dancdn";
