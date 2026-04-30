@@ -3,10 +3,10 @@
   lib,
   ...
 }: let
-  cfg = config.homelab.forgejo.db;
+  cfg = config.homelab.immich.db;
   inherit (lib) types;
 in {
-  options.homelab.forgejo.db = {
+  options.homelab.immich.db = {
     instances = lib.mkOption {
       type = types.int;
       default = 1;
@@ -32,24 +32,24 @@ in {
     };
   };
 
-  config = lib.mkIf config.homelab.forgejo.enable {
+  config = lib.mkIf config.homelab.immich.enable {
     services.k3s = {
-      manifests.cnpg-databases.content =
+      manifests.immich-db.content =
         [
           {
             apiVersion = "networking.k8s.io/v1";
             kind = "NetworkPolicy";
             metadata = {
-              name = "forgejo-db-allow-app";
-              namespace = "forgejo";
+              name = "immich-db-allow-app";
+              namespace = "immich";
             };
             spec = {
-              podSelector.matchLabels."cnpg.io/cluster" = "forgejo-db";
+              podSelector.matchLabels."cnpg.io/cluster" = "immich-db";
               ingress = [
                 {
                   from = [
                     {
-                      podSelector.matchLabels."app.kubernetes.io/name" = "forgejo";
+                      podSelector.matchLabels."app.kubernetes.io/instance" = "immich";
                     }
                   ];
                   ports = [
@@ -66,11 +66,11 @@ in {
             apiVersion = "networking.k8s.io/v1";
             kind = "NetworkPolicy";
             metadata = {
-              name = "forgejo-db-allow-operator";
-              namespace = "forgejo";
+              name = "immich-db-allow-operator";
+              namespace = "immich";
             };
             spec = {
-              podSelector.matchLabels."cnpg.io/cluster" = "forgejo-db";
+              podSelector.matchLabels."cnpg.io/cluster" = "immich-db";
               ingress = [
                 {
                   from = [
@@ -92,11 +92,11 @@ in {
             apiVersion = "networking.k8s.io/v1";
             kind = "NetworkPolicy";
             metadata = {
-              name = "forgejo-db-allow-monitoring";
-              namespace = "forgejo";
+              name = "immich-db-allow-monitoring";
+              namespace = "immich";
             };
             spec = {
-              podSelector.matchLabels."cnpg.io/cluster" = "forgejo-db";
+              podSelector.matchLabels."cnpg.io/cluster" = "immich-db";
               ingress = [
                 {
                   from = [
@@ -119,16 +119,16 @@ in {
             apiVersion = "networking.k8s.io/v1";
             kind = "NetworkPolicy";
             metadata = {
-              name = "forgejo-db-allow-inter-node";
-              namespace = "forgejo";
+              name = "immich-db-allow-inter-node";
+              namespace = "immich";
             };
             spec = {
-              podSelector.matchLabels."cnpg.io/cluster" = "forgejo-db";
+              podSelector.matchLabels."cnpg.io/cluster" = "immich-db";
               ingress = [
                 {
                   from = [
                     {
-                      podSelector.matchLabels."cnpg.io/cluster" = "forgejo-db";
+                      podSelector.matchLabels."cnpg.io/cluster" = "immich-db";
                     }
                   ];
                   ports = [
@@ -145,9 +145,8 @@ in {
             apiVersion = "postgresql.cnpg.io/v1";
             kind = "Cluster";
             metadata = {
-              name = "forgejo-db";
-              namespace = "forgejo";
-              #annotations."cnpg.io/fencesInstances" = [ "*" ];
+              name = "immich-db";
+              namespace = "immich";
             };
             spec =
               {
@@ -155,29 +154,18 @@ in {
                 minSyncReplicas = 0;
                 maxSyncReplicas = 0;
 
-                postgresql.parameters = {
-                  max_connections = "50";
+                imageName = "ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.4.3";
+                postgresql = {
+                  shared_preload_libraries = ["vchord.so"];
+                };
 
-                  shared_buffers = "64MB";
-                  effective_cache_size = "400MB";
-                  maintenance_work_mem = "32MB";
-                  work_mem = "4MB";
-
-                  wal_buffers = "2MB";
-                  min_wal_size = "256MB";
-                  max_wal_size = "1GB";
-                  checkpoint_completion_target = "0.9";
-
-                  default_statistics_target = "100";
-                  random_page_cost = "1.1";
-                  effective_io_concurrency = "200";
-
-                  huge_pages = "off";
-
-                  log_statement = "none";
-                  log_min_duration_statement = "1000";
-                  autovacuum = "on";
-                  autovacuum_max_workers = "2";
+                bootstrap = {
+                  initdb = {
+                    postInitApplicationSQL = [
+                      "CREATE EXTENSION vchord CASCADE;"
+                      "CREATE EXTENSION earthdistance CASCADE;"
+                    ];
+                  };
                 };
 
                 monitoring = {
@@ -206,15 +194,15 @@ in {
               // lib.optionalAttrs cfg.backup.enable {
                 backup = {
                   barmanObjectStore = {
-                    destinationPath = "s3://forgejo-backup";
-                    endpointURL = "https://s3.${config.homelab.garage.host}";
+                    destinationPath = "s3://immich-backup";
+                    endpointURL = "https://s3.${config.homelab.garage.domain}";
                     s3Credentials = {
                       accessKeyId = {
-                        name = "forgejo-db-backup-s3-credentials";
+                        name = "immich-db-backup-s3-credentials";
                         key = "access-key-id";
                       };
                       secretAccessKey = {
-                        name = "forgejo-db-backup-s3-credentials";
+                        name = "immich-db-backup-s3-credentials";
                         key = "secret-access-key";
                       };
                     };
@@ -229,54 +217,17 @@ in {
         ]
         ++ lib.optionals cfg.backup.enable [
           {
-            apiVersion = "garage.rajsingh.info/v1alpha1";
-            kind = "GarageKey";
-            metadata = {
-              name = "forgejo-db-backup-s3-credentials";
-              namespace = "forgejo";
-            };
-            spec = {
-              clusterRef = {
-                name = "garage";
-                namespace = "garage";
-              };
-              bucketPermissions = [
-                {
-                  bucketRef = "forgejo-backup-bucket";
-                  read = true;
-                  write = true;
-                }
-              ];
-            };
-          }
-
-          {
-            apiVersion = "garage.rajsingh.info/v1alpha1";
-            kind = "GarageBucket";
-            metadata = {
-              name = "forgejo-backup-bucket";
-              namespace = "forgejo";
-            };
-            spec = {
-              clusterRef = {
-                name = "garage";
-                namespace = "garage";
-              };
-              quotas.maxSize = "50Gi";
-            };
-          }
-          {
             apiVersion = "rbac.authorization.k8s.io/v1";
             kind = "Role";
             metadata = {
-              name = "forgejo-db";
-              namespace = "forgejo";
+              name = "immich-db";
+              namespace = "immich";
             };
             rules = [
               {
                 apiGroups = [""];
                 resources = ["secrets"];
-                resourceNames = ["forgejo-db-backup-s3-credentials"];
+                resourceNames = ["immich-db-backup-s3-credentials"];
                 verbs = ["get"];
               }
               {
@@ -306,19 +257,19 @@ in {
             apiVersion = "rbac.authorization.k8s.io/v1";
             kind = "RoleBinding";
             metadata = {
-              name = "forgejo-db";
-              namespace = "forgejo";
+              name = "immich-db";
+              namespace = "immich";
             };
             roleRef = {
               apiGroup = "rbac.authorization.k8s.io";
               kind = "Role";
-              name = "forgejo-db";
+              name = "immich-db";
             };
             subjects = [
               {
                 kind = "ServiceAccount";
-                name = "forgejo-db";
-                namespace = "forgejo";
+                name = "immich-db";
+                namespace = "immich";
               }
             ];
           }
@@ -327,14 +278,14 @@ in {
             apiVersion = "postgresql.cnpg.io/v1";
             kind = "ScheduledBackup";
             metadata = {
-              name = "forgejo-db";
-              namespace = "forgejo";
+              name = "immich-db";
+              namespace = "immich";
             };
             spec = {
               schedule = "0 0 1 * * 0";
               immediate = true;
               backupOwnerReference = "self";
-              cluster.name = "forgejo-db";
+              cluster.name = "immich-db";
             };
           }
         ];

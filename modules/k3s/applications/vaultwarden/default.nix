@@ -15,6 +15,11 @@ in {
         then "warden.${config.homelab.domain}"
         else null;
     };
+    backup.enable = lib.mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable database backups";
+    };
     pushNotifications = {
       installationId = lib.mkOption {
         type = types.str;
@@ -98,20 +103,118 @@ in {
           }
           else {};
       };
-      extraDeploy = [
-        {
-          apiVersion = "postgresql.cnpg.io/v1";
-          kind = "Cluster";
-          metadata = {
-            name = "vaultwarden-db";
-            namespace = "vaultwarden";
-          };
-          spec = {
-            instances = 1;
-            storage = {size = "5Gi";};
-          };
-        }
-      ];
+      extraDeploy =
+        [
+          {
+            apiVersion = "postgresql.cnpg.io/v1";
+            kind = "Cluster";
+            metadata = {
+              name = "vaultwarden-db";
+              namespace = "vaultwarden";
+            };
+            spec =
+              {
+                instances = 1;
+                storage = {size = "5Gi";};
+              }
+              // lib.optionalAttrs cfg.backup.enable {
+                backup = {
+                  barmanObjectStore = {
+                    destinationPath = "s3://vaultwarden-backup";
+                    endpointURL = "https://s3.${config.homelab.garage.domain}";
+                    s3Credentials = {
+                      accessKeyId = {
+                        name = "vaultwarden-db-backup-s3-credentials";
+                        key = "access-key-id";
+                      };
+                      secretAccessKey = {
+                        name = "vaultwarden-db-backup-s3-credentials";
+                        key = "secret-access-key";
+                      };
+                    };
+                    data.compression = "snappy";
+                    wal.compression = "snappy";
+                  };
+
+                  retentionPolicy = "30d";
+                };
+              };
+          }
+        ]
+        ++ lib.optionals cfg.backup.enable [
+          {
+            apiVersion = "rbac.authorization.k8s.io/v1";
+            kind = "Role";
+            metadata = {
+              name = "vaultwarden-db";
+              namespace = "vaultwarden";
+            };
+            rules = [
+              {
+                apiGroups = [""];
+                resources = ["secrets"];
+                resourceNames = ["vaultwarden-db-backup-s3-credentials"];
+                verbs = ["get"];
+              }
+              {
+                apiGroups = ["postgresql.cnpg.io"];
+                resources = ["backups"];
+                verbs = [
+                  "get"
+                  "list"
+                  "watch"
+                  "patch"
+                  "update"
+                ];
+              }
+              {
+                apiGroups = ["postgresql.cnpg.io"];
+                resources = ["backups/status"];
+                verbs = [
+                  "get"
+                  "patch"
+                  "update"
+                ];
+              }
+            ];
+          }
+
+          {
+            apiVersion = "rbac.authorization.k8s.io/v1";
+            kind = "RoleBinding";
+            metadata = {
+              name = "vaultwarden-db";
+              namespace = "vaultwarden";
+            };
+            roleRef = {
+              apiGroup = "rbac.authorization.k8s.io";
+              kind = "Role";
+              name = "vaultwarden-db";
+            };
+            subjects = [
+              {
+                kind = "ServiceAccount";
+                name = "vaultwarden-db";
+                namespace = "vaultwarden";
+              }
+            ];
+          }
+
+          {
+            apiVersion = "postgresql.cnpg.io/v1";
+            kind = "ScheduledBackup";
+            metadata = {
+              name = "vaultwarden-db";
+              namespace = "vaultwarden";
+            };
+            spec = {
+              schedule = "0 0 1 * * 0";
+              immediate = true;
+              backupOwnerReference = "self";
+              cluster.name = "vaultwarden-db";
+            };
+          }
+        ];
     };
     secrets = [
       {

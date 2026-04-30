@@ -113,6 +113,71 @@ in {
       }
     ];
 
+    manifests.garage-webui.content = [
+      {
+        apiVersion = "apps/v1";
+        kind = "Deployment";
+        metadata = {
+          name = "garage-webui";
+          namespace = "garage";
+          labels."app.kubernetes.io/name" = "garage-webui";
+        };
+        spec = {
+          replicas = 1;
+          selector.matchLabels."app.kubernetes.io/name" = "garage-webui";
+          template = {
+            metadata.labels."app.kubernetes.io/name" = "garage-webui";
+            spec.containers = [
+              {
+                name = "garage-webui";
+                image = "khairul169/garage-webui:latest";
+                ports = [{containerPort = 3909;}];
+                env = [
+                  {
+                    name = "API_BASE_URL";
+                    value = "http://garage:3903";
+                  }
+                  {
+                    name = "S3_ENDPOINT_URL";
+                    value = "http://garage:3900";
+                  }
+                  {
+                    name = "S3_REGION";
+                    value = cfg.s3Region;
+                  }
+                  {
+                    name = "API_ADMIN_KEY";
+                    valueFrom.secretKeyRef = {
+                      name = "garage-secrets";
+                      key = "admin-token";
+                    };
+                  }
+                ];
+              }
+            ];
+          };
+        };
+      }
+      {
+        apiVersion = "v1";
+        kind = "Service";
+        metadata = {
+          name = "garage-webui";
+          namespace = "garage";
+          labels."app.kubernetes.io/name" = "garage-webui";
+        };
+        spec = {
+          selector."app.kubernetes.io/name" = "garage-webui";
+          ports = [
+            {
+              port = 3909;
+              targetPort = 3909;
+            }
+          ];
+        };
+      }
+    ];
+
     secrets = [
       {
         metadata = {

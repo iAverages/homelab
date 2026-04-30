@@ -155,6 +155,7 @@
 
     forgejo = {
       enable = true;
+      db.backup.enable = true;
       admin = {
         username = "dan";
         email = "forgejo@danielraybone.com";
