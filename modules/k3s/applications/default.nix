@@ -6,6 +6,7 @@
     ./immich
     ./mie
     ./paperless
+    ./spqtify.com
     ./vaultwarden
   ];
 }

@@ -18,6 +18,9 @@
       tailscaleAuthKey = {};
       tailscaleClientId = {};
       tailscaleClientSecret = {};
+      "spqtify/b2_bucket_id" = {};
+      "spqtify/b2_application_key_id" = {};
+      "spqtify/b2_application_key" = {};
       tlsCrt = {
         format = "binary";
         sopsFile = ./secrets/ssl/origin-cert.pem;
@@ -37,6 +40,15 @@
     domain = "kirsi.dev";
     glance.enable = true;
     # glance.domain = "glance.kirsi.dev";
+    spqtify = {
+      enable = true;
+      domain = "dev.spqtify.com";
+      b2 = {
+        b2_bucket_id = config.sops.placeholder."spqtify/b2_bucket_id";
+        b2_application_key_id = config.sops.placeholder."spqtify/b2_application_key_id";
+        b2_application_key = config.sops.placeholder."spqtify/b2_application_key";
+      };
+    };
     tailscale = {
       enable = true;
       oauth = {
@@ -45,7 +57,7 @@
       };
     };
     traefik = {
-      ip = "46.224.203.151";
+      # ip = "46.224.203.151";
       tls = {
         crt = config.sops.placeholder.tlsCrt;
         key = config.sops.placeholder.tlsKey;

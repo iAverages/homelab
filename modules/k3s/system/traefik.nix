@@ -19,7 +19,10 @@ in {
         then "traefik.${config.homelab.domain}"
         else null;
     };
-    ip = lib.mkOption {type = types.nullOr types.str;};
+    ip = lib.mkOption {
+      type = types.nullOr types.str;
+      default = null;
+    };
   };
 
   config.services.k3s = lib.mkIf config.homelab.enable {
@@ -60,10 +63,6 @@ in {
               };
             };
           };
-          websecure =
-            if cfg.ip == null
-            then {nodePort = 443;}
-            else {};
         };
         metrics =
           if monitoringEnabled
