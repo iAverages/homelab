@@ -17,8 +17,8 @@ in {
     autoDeployCharts.mysql-operator = {
       name = "mysql-operator";
       repo = "https://mysql.github.io/mysql-operator/";
-      version = "2.2.7";
-      hash = "sha256-2I21COh+cCJNU0qTa8vlZEbRpi5BNnRKbMrrhYJjcZE=";
+      version = "2.2.8";
+      hash = "sha256-NeMklciKcD6oXYbOvjBcdzJjnpmBg3rSrs7wSTosuqQ=";
       targetNamespace = "mysql-operator";
       createNamespace = true;
     };
