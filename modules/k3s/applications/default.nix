@@ -1,6 +1,7 @@
 {
   imports = [
     ./atuin
+    ./cloudflare-tunnel
     ./forgejo
     ./glance
     ./immich
