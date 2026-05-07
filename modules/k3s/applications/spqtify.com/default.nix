@@ -25,19 +25,19 @@ in {
       targetNamespace = "spqtify";
       createNamespace = true;
       repo = "oci://ghcr.io/iaverages/charts/spqtify.com";
-      version = "1.0.1";
-      hash = "sha256-5LOzBWKq4o2E/RdIaQ8k4MwcXzYSQ7eyedncK1adL00=";
+      version = "1.0.2";
+      hash = "sha256-oLbKeIV+0vfDhyfKfTICK+A7Qxe9yfvE2nlje8SyGQs=";
       values = {
         api = {
           image = {
-            tag = "production-fbac8ad0786ed7b4a69fa234d8db917854dea375";
+            tag = "production-2b737132c5d22c059a8dee2076835da5af9828ab";
           };
           existingSecret = "spqtify-api-secrets";
         };
 
         "embed-image-service" = {
           image = {
-            tag = "production-fbac8ad0786ed7b4a69fa234d8db917854dea375";
+            tag = "production-2b737132c5d22c059a8dee2076835da5af9828ab";
           };
         };
 

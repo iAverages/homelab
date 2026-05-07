@@ -38,6 +38,7 @@
   homelab = {
     enable = true;
     domain = "kirsi.dev";
+    settings.disableServicelb = false;
     glance.enable = true;
     # glance.domain = "glance.kirsi.dev";
     spqtify = {
