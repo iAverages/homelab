@@ -30,14 +30,14 @@ in {
       values = {
         api = {
           image = {
-            tag = "production-2b737132c5d22c059a8dee2076835da5af9828ab";
+            tag = "production-d00971b8a545305a25c9538c9a152f20e4a5bfd4";
           };
           existingSecret = "spqtify-api-secrets";
         };
 
         "embed-image-service" = {
           image = {
-            tag = "production-2b737132c5d22c059a8dee2076835da5af9828ab";
+            tag = "production-d00971b8a545305a25c9538c9a152f20e4a5bfd4";
           };
         };
 
