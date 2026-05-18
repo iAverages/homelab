@@ -7,6 +7,7 @@
     sops-nix,
     flake-utils,
     comin,
+    nixflix,
     ...
   } @ inputs: let
     hostsPath = ./hosts;
@@ -25,6 +26,7 @@
           sops-nix.nixosModules.sops
           disko.nixosModules.disko
           comin.nixosModules.comin
+          nixflix.nixosModules.default
 
           ./modules/nixos/system/nix.nix
           ./hosts/${hostname}
@@ -69,6 +71,10 @@
     };
     comin = {
       url = "github:nlewo/comin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixflix = {
+      url = "github:kiriwalawren/nixflix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

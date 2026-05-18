@@ -36,6 +36,7 @@
     };
 
     syncthing.enable = true;
+    nixflix.enable = true;
 
     external-smtp = {
       enable = true;
@@ -98,6 +99,28 @@
       "mie/discordToken" = {};
       "vaultwarden/pushNotifications/installationId" = {};
       "vaultwarden/pushNotifications/installationKey" = {};
+
+      "sonarr/api_key" = {};
+      "sonarr/password" = {};
+      "radarr/api_key" = {};
+      "radarr/password" = {};
+      "lidarr/api_key" = {};
+      "lidarr/password" = {};
+      "prowlarr/api_key" = {};
+      "prowlarr/password" = {};
+      "indexer-api-keys/DrunkenSlug" = {};
+      "indexer-api-keys/NZBFinder" = {};
+      "indexer-api-keys/NzbPlanet" = {};
+      "jellyfin/dan_password" = {};
+      "jellyfin/api_key" = {};
+      "seerr/api_key" = {};
+      "wireguard/conf" = {};
+      "sabnzbd/api_key" = {};
+      "sabnzbd/nzb_key" = {};
+      "usenet/eweka/username" = {};
+      "usenet/eweka/password" = {};
+      "usenet/newsgroupdirect/username" = {};
+      "usenet/newsgroupdirect/password" = {};
     };
     age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
   };
