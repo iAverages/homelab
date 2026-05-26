@@ -25,6 +25,17 @@
       "create mask" = "0660";
       "directory mask" = "0770";
     };
+
+    riley = {
+      path = "/opt/data/done/media/videos/anime/call of the night season 2";
+      browseable = "yes";
+      "read only" = "no";
+      "guest ok" = "no";
+      "valid users" = "dan";
+      "force user" = "dan";
+      "create mask" = "0660";
+      "directory mask" = "0770";
+    };
   };
 
   # sambaEnabledUsers =

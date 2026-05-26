@@ -113,8 +113,12 @@
       "indexer-api-keys/NzbPlanet" = {};
       "jellyfin/dan_password" = {};
       "jellyfin/api_key" = {};
+      "qbittorrent/password" = {};
       "seerr/api_key" = {};
-      "wireguard/conf" = {};
+      "wireguard/conf" = {
+        format = "binary";
+        sopsFile = ./secrets/wg.conf;
+      };
       "sabnzbd/api_key" = {};
       "sabnzbd/nzb_key" = {};
       "usenet/eweka/username" = {};
