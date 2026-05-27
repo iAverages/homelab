@@ -8,6 +8,14 @@
 in {
   options.services.nixflix = {
     enable = lib.mkEnableOption "nixflix";
+    storagePath = lib.mkOption {
+      type = lib.types.str;
+      default = "/opt/nixflix";
+    };
+    stateDir = lib.mkOption {
+      type = lib.types.str;
+      default = "/opt/nixflix-state";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -16,8 +24,9 @@ in {
     };
     nixflix = {
       enable = true;
-      mediaDir = "/opt/nixflix/media";
-      stateDir = "/opt/nixflix/.state";
+      mediaDir = "${cfg.storagePath}/media";
+      downloadsDir = "${cfg.storagePath}/downloads";
+      stateDir = cfg.stateDir;
 
       nginx = {
         enable = true;
