@@ -310,7 +310,10 @@
   boot = {
     loader = {
       efi.canTouchEfiVariables = true;
-      limine.enable = true;
+      limine = {
+        enable = true;
+        maxGenerations = 5;
+      };
     };
   };
 

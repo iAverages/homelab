@@ -5,6 +5,11 @@
     overlays = import ../../lib {};
   };
   nix = {
+    gc = {
+      automatic = true;
+      dates = "daily";
+      options = "--delete-older-than 7d";
+    };
     nixPath = ["nixpkgs=${inputs.nixpkgs}"];
     settings = {
       experimental-features = [
