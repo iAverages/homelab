@@ -178,8 +178,11 @@ in {
         encoding = {
           allowAv1Encoding = true;
           allowHevcEncoding = true;
-          # hardwareAccelerationType = "nvenc";
+          enableHardwareEncoding = true;
+          hardwareAccelerationType = "nvenc";
+          enableTonemapping = true;
         };
+        system.trickplayOptions.enableHwEncoding = true;
         system.pluginRepositories = {
           "Jellyfin Stable" = {
             url = "https://repo.jellyfin.org/files/plugin/manifest.json";

@@ -9,6 +9,15 @@
     ./samba.nix
   ];
 
+  hardware.graphics.enable = true;
+  services.xserver.videoDrivers = ["nvidia"];
+  hardware.nvidia = {
+    modesetting.enable = true;
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
+    open = false;
+  };
+
   services = {
     tlp = {
       enable = true;
@@ -51,7 +60,7 @@
     };
 
     openssh.enable = true;
-    config-git-deploy.enable = true;
+    config-git-deploy.enable = false;
 
     zfs.zed = {
       enableMail = true;
@@ -61,9 +70,9 @@
     };
   };
 
-  powerManagement.powerUpCommands = with pkgs; ''
-    ${hdparm}/bin/hdparm -S 60 $(${util-linux}/bin/lsblk -dnp -o name,rota | ${gnugrep}/bin/grep \'.*\\s1\' | ${coreutils}/bin/cut -d \' \' -f 1)
-  '';
+  # powerManagement.powerUpCommands = with pkgs; ''
+  #  ${hdparm}/bin/hdparm -S 60 $(${util-linux}/bin/lsblk -dnp -o name,rota | ${gnugrep}/bin/grep \'.*\\s1\' | ${coreutils}/bin/cut -d \' \' -f 1)
+  # '';
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
