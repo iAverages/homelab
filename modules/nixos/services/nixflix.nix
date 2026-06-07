@@ -176,7 +176,7 @@ in {
           };
         };
         encoding = {
-          allowAv1Encoding = true;
+          allowAv1Encoding = false;
           allowHevcEncoding = true;
           enableHardwareEncoding = true;
           hardwareAccelerationType = "nvenc";

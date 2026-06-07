@@ -12,11 +12,13 @@
   hardware.graphics.enable = true;
   services.xserver.videoDrivers = ["nvidia"];
   hardware.nvidia = {
+    package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
     modesetting.enable = true;
-    powerManagement.enable = false;
-    powerManagement.finegrained = false;
     open = false;
   };
+
+  boot.blacklistedKernelModules = ["nouveau"];
+  users.users.jellyfin.extraGroups = ["video" "render"];
 
   services = {
     tlp = {
@@ -308,12 +310,7 @@
   boot = {
     loader = {
       efi.canTouchEfiVariables = true;
-      systemd-boot.enable = false;
-      grub = {
-        enable = true;
-        devices = ["nodev"];
-        efiSupport = false;
-      };
+      limine.enable = true;
     };
   };
 
