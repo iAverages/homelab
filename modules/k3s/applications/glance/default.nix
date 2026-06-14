@@ -56,23 +56,49 @@
           {
             size = "full";
             widgets = [
-              # {
-              #   type = "monitor";
-              #   cache = "1m";
-              #   title = "Applications";
-              #   sites = [
-              #     (
-              #       lib.optionals
-              #       (config.homelab.paperless.enable && config.homelab.paperless.domain != null)
-              #       {
-              #         title = "paperless";
-              #         url = "https://${config.homelab.paperless.domain}";
-              #         "check-url" = "http://paperless.paperless.svc.cluster.local:8000";
-              #         icon = "di:paperless-ngx";
-              #       }
-              #     )
-              #   ];
-              # }
+              {
+                type = "monitor";
+                cache = "1m";
+                title = "Applications";
+                sites = [
+                  {
+                    title = "jellyfin";
+                    url = "https://jellyfin.nixflix";
+                    "check-url" = "http://prometheus-stack-grafana.monitoring.svc.cluster.local:80";
+                    icon = "di:jellyfin";
+                  }
+                  {
+                    title = "pi-hole";
+                    url = "https://pihole.dan.lan/admin";
+                    "check-url" = "http://pihole-web.pihole.svc.cluster.local:80/admin";
+                    icon = "di:pi-hole";
+                  }
+                  {
+                    title = "vaultwarden";
+                    url = "https://vaultwarden.dan.lan";
+                    "check-url" = "http://vaultwarden.vaultwarden.svc.cluster.local:80";
+                    icon = "di:vaultwarden";
+                  }
+                  {
+                    title = "paperless";
+                    url = "https://paperless.dan.lan";
+                    "check-url" = "http://paperless.paperless.svc.cluster.local:8000";
+                    icon = "di:paperless-ngx";
+                  }
+                  {
+                    title = "actual-budget";
+                    url = "https://budget.dan.lan";
+                    "check-url" = "http://actual-budget.actual-budget.svc.cluster.local:5006";
+                    icon = "di:actual-budget";
+                  }
+                  {
+                    title = "shiori";
+                    url = "https://shiori.dan.lan";
+                    "check-url" = "http://shiori.shiori.svc.cluster.local:8080";
+                    icon = "di:shiori";
+                  }
+                ];
+              }
               {
                 type = "monitor";
                 cache = "1m";
