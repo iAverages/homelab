@@ -1,5 +1,6 @@
 {
   imports = [
+    ./actual-budget
     ./atuin
     ./cloudflare-tunnel
     ./forgejo

@@ -161,6 +161,7 @@
   homelab = {
     enable = true;
     domain = "dan.lan";
+    actual-budget.enable = true;
     metallb.enable = true;
     metallb.addresses = ["192.168.1.11-192.168.1.149"];
     cnpg.enable = true;
