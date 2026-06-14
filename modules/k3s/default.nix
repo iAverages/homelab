@@ -10,6 +10,7 @@ in {
     ./databases
     ./monitoring
     ./system
+    ./manifest-cleanup.nix
     ./options.nix
     ./test.nix
   ];
