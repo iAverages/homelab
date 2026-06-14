@@ -8,6 +8,7 @@
     ./immich
     ./mie
     ./paperless
+    ./shiori
     ./spqtify.com
     ./vaultwarden
   ];
