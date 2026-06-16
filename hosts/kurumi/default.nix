@@ -10,6 +10,7 @@
   ];
 
   hardware.graphics.enable = true;
+  hardware.bluetooth.enable = true;
   services.xserver.videoDrivers = ["nvidia"];
   hardware.nvidia = {
     package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
@@ -97,6 +98,7 @@
       tailscaleClientId = {};
       tailscaleClientSecret = {};
       "pihole/password" = {};
+      "zigbee2mqtt/mqtt/password" = {};
       "grafana/username" = {};
       "grafana/password" = {};
       "discordWebhookUrl" = {};
@@ -178,6 +180,12 @@
     dragonfly.enable = true;
     paperless.enable = true;
     glance.enable = true;
+    home-assistant.enable = true;
+    zigbee2mqtt = {
+      enable = true;
+      zigbeeDevice = "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_bae0aa2ac8a3ef11b8174cbd61ce3355-if00-port0";
+      mqttPassword = config.sops.placeholder."zigbee2mqtt/mqtt/password";
+    };
     tailscale = {
       enable = true;
       oauth = {
