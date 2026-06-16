@@ -268,6 +268,7 @@
     hostId = "b1ba14e8";
     useDHCP = true;
     interfaces.enp4s0.useDHCP = true;
+    nameservers = ["1.1.1.1" "1.0.0.1"];
   };
 
   boot.initrd = {
