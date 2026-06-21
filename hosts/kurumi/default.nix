@@ -72,9 +72,17 @@
     };
   };
 
-  # powerManagement.powerUpCommands = with pkgs; ''
-  #  ${hdparm}/bin/hdparm -S 60 $(${util-linux}/bin/lsblk -dnp -o name,rota | ${gnugrep}/bin/grep \'.*\\s1\' | ${coreutils}/bin/cut -d \' \' -f 1)
-  # '';
+  systemd.services.set-hdd-spindown = {
+    description = "Set spindown timer for rotational HDDs";
+    wantedBy = ["multi-user.target"];
+    serviceConfig.Type = "oneshot";
+
+    script = ''
+      ${pkgs.hdparm}/bin/hdparm -S 60 $(
+        ${pkgs.util-linux}/bin/lsblk -dnpo NAME,ROTA | ${pkgs.gawk}/bin/awk '$2==1 {print $1}'
+      )
+    '';
+  };
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
