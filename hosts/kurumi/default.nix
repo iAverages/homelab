@@ -15,6 +15,8 @@
   hardware.nvidia = {
     package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
     modesetting.enable = true;
+    powerManagement.enable = true;
+    moduleParams.nvidia.NVreg_DynamicPowerManagement = "0x02";
     open = false;
   };
 
@@ -71,6 +73,13 @@
         ZED_EMAIL_ADDR = ["root"];
       };
     };
+
+    udev.extraRules = ''
+      ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
+      ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
+      ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
+      ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"
+    '';
   };
 
   systemd.services.set-hdd-spindown = {
@@ -139,6 +148,7 @@
       "wireguard/conf" = {
         format = "binary";
         sopsFile = ./secrets/wg.conf;
+        restartUnits = ["wg.service" "qbittorrent.service"];
       };
       "sabnzbd/api_key" = {};
       "sabnzbd/nzb_key" = {};

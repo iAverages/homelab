@@ -1,10 +1,13 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }: let
   cfg = config.services.nixflix;
   vpnAll = false;
+  qbittorrentWebUi = "http://192.168.15.1:8282/";
+  waitForQbittorrent = "${pkgs.curl}/bin/curl --retry 30 --retry-delay 2 --retry-connrefused -fsS -o /dev/null ${qbittorrentWebUi}";
 in {
   options.services.nixflix = {
     enable = lib.mkEnableOption "nixflix";
@@ -209,5 +212,22 @@ in {
         accessibleFrom = ["192.168.1.0/24"];
       };
     };
+
+    systemd.services =
+      lib.genAttrs [
+        "sonarr-downloadclients"
+        "sonarr-anime-downloadclients"
+        "radarr-downloadclients"
+        "lidarr-downloadclients"
+        "prowlarr-downloadclients"
+      ] (_: {
+        serviceConfig.ExecStartPre = lib.mkAfter [waitForQbittorrent];
+      })
+      // {
+        qbittorrent.serviceConfig = {
+          Restart = "always";
+          RestartSec = "5s";
+        };
+      };
   };
 }
