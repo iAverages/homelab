@@ -8,6 +8,7 @@
     ./home-assistant
     ./immich
     ./mie
+    ./minecraft
     ./paperless
     ./shiori
     ./spqtify.com
