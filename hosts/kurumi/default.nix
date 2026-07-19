@@ -9,6 +9,8 @@
     ./samba.nix
   ];
 
+  environment.systemPackages = [pkgs.codex];
+
   hardware.graphics.enable = true;
   hardware.bluetooth.enable = true;
   services.xserver.videoDrivers = ["nvidia"];
