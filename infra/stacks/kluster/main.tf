@@ -15,16 +15,23 @@ locals {
   }
 }
 
-module "system_build" {
-  for_each  = local.hosts
-  source    = "github.com/nix-community/nixos-anywhere//terraform/nix-build"
-  attribute = ".#nixosConfigurations.${each.value.hostname}.config.system.build.toplevel"
-}
-
 module "deploy" {
-  for_each     = local.hosts
-  source       = "github.com/nix-community/nixos-anywhere//terraform/nixos-rebuild"
-  nixos_system = module.system_build[each.key].result.out
+  for_each = local.hosts
+  source   = "github.com/nix-community/nixos-anywhere//terraform/all-in-one"
+
+  nixos_system_attr      = ".#nixosConfigurations.${each.value.hostname}.config.system.build.toplevel"
+  nixos_partitioner_attr = ".#nixosConfigurations.${each.value.hostname}.config.system.build.diskoScript"
+
   target_host  = each.value.ipv4
-  target_user  = each.value.user
+  install_user = each.value.install_user
+  target_user  = each.value.target_user
+  instance_id  = each.value.instance_id
+
+  copy_host_keys             = true
+  nixos_generate_config_path = "${local.hosts_root}/${each.value.hostname}/hardware-configuration.nix"
+
+  extra_files_script = "${path.module}/prepare-extra-files.sh"
+  extra_environment = {
+    TAKINA_SOPS_KEY_FILE = "" # replace if reinstalling
+  }
 }

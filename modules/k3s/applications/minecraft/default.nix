@@ -9,6 +9,8 @@
   minecraftPort = 25565;
 
   serverNames = lib.attrNames cfg.servers;
+  proxiedServerNames = lib.filter (name: cfg.servers.${name}.directPort == null) serverNames;
+  directPorts = lib.filter (port: port != null) (map (name: cfg.servers.${name}.directPort) serverNames);
   nameRegex = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$";
   validServerName = name:
     builtins.match nameRegex name != null && builtins.stringLength name <= 53;
@@ -38,8 +40,8 @@
   defaultBackend =
     if cfg.defaultServer != null
     then serverServiceName cfg.defaultServer
-    else if builtins.length serverNames == 1
-    then serverServiceName (lib.head serverNames)
+    else if builtins.length proxiedServerNames == 1
+    then serverServiceName (lib.head proxiedServerNames)
     else "minecraft-unmatched";
   proxyProtocolOption = proxyProtocol:
     if proxyProtocol == "v1"
@@ -198,7 +200,7 @@
     in [
       "  use_backend ${serverServiceName name} if ${domainMatcher server}"
     ])
-    serverNames
+    proxiedServerNames
     ++ [
       "  default_backend ${defaultBackend}"
       ""
@@ -212,7 +214,7 @@
       "  server minecraft ${serviceName}.${namespace}.svc.cluster.local:${toString minecraftPort}${proxyProtocolOption server.proxyProtocol}"
       ""
     ])
-    serverNames
+    proxiedServerNames
     ++ [
       "backend minecraft-unmatched"
       "  mode tcp"
@@ -225,6 +227,10 @@
     labels = serverLabels name;
     serviceName = serverServiceName name;
     dataVolumeName = "${serviceName}-data";
+    servicePort =
+      if server.directPort != null
+      then server.directPort
+      else minecraftPort;
     environment =
       server.environment
       // {
@@ -325,13 +331,16 @@
         namespace = namespace;
       };
       spec = {
-        type = "ClusterIP";
+        type =
+          if server.directPort != null
+          then "LoadBalancer"
+          else "ClusterIP";
         selector = labels;
         ports = [
           {
             name = "minecraft";
             protocol = "TCP";
-            port = minecraftPort;
+            port = servicePort;
             targetPort = minecraftPort;
           }
         ];
@@ -350,8 +359,14 @@ in {
       type = types.attrsOf (types.submodule ({name, ...}: {
         options = {
           domain = lib.mkOption {
-            type = types.str;
-            description = "Domain routed by HAProxy to this Minecraft server.";
+            type = types.nullOr types.str;
+            default = null;
+            description = "Domain routed by HAProxy to this Minecraft server; required unless directPort is set.";
+          };
+          directPort = lib.mkOption {
+            type = types.nullOr types.port;
+            default = null;
+            description = "Optional external TCP port that exposes this server directly instead of through HAProxy.";
           };
           jarUrl = lib.mkOption {
             type = types.nullOr types.str;
@@ -403,12 +418,24 @@ in {
         message = "homelab.minecraft.servers keys must be lowercase Kubernetes names and fit the minecraft- prefix.";
       }
       {
-        assertion = cfg.defaultServer == null || builtins.hasAttr cfg.defaultServer cfg.servers;
-        message = "homelab.minecraft.defaultServer must name a configured Minecraft server.";
+        assertion = cfg.defaultServer == null || builtins.elem cfg.defaultServer proxiedServerNames;
+        message = "homelab.minecraft.defaultServer must name a configured server without directPort.";
+      }
+      {
+        assertion = lib.all (name: cfg.servers.${name}.domain != null) proxiedServerNames;
+        message = "homelab.minecraft servers without directPort must configure domain.";
+      }
+      {
+        assertion = builtins.length directPorts == builtins.length (lib.unique directPorts);
+        message = "homelab.minecraft directPort values must be unique.";
+      }
+      {
+        assertion = proxiedServerNames == [] || lib.all (port: port != minecraftPort) directPorts;
+        message = "homelab.minecraft directPort cannot be 25565 while HAProxy is enabled.";
       }
     ];
 
-    networking.firewall.allowedTCPPorts = [minecraftPort];
+    networking.firewall.allowedTCPPorts = directPorts ++ lib.optionals (proxiedServerNames != []) [minecraftPort];
 
     services.k3s.manifests.minecraft.content =
       [
@@ -417,6 +444,8 @@ in {
           kind = "Namespace";
           metadata.name = namespace;
         }
+      ]
+      ++ lib.optionals (proxiedServerNames != []) [
         {
           apiVersion = "v1";
           kind = "ConfigMap";

@@ -1,6 +1,8 @@
 {
-  "ipv4": "88.99.214.224",
+  "ipv4": "51.255.84.62",
   "hostname": "takina",
-  "user": "root",
+  "install_user": "debian",
+  "target_user": "root",
+  "instance_id": "takina-nixos-1",
   "group": "kluster"
 }

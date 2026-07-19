@@ -9,6 +9,7 @@
     ./immich
     ./mie
     ./minecraft
+    ./palworld
     ./paperless
     ./shiori
     ./spqtify.com

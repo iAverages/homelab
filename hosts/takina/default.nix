@@ -1,11 +1,39 @@
 {config, ...}: {
   imports = [
+    ./disko.nix
     ./hardware-configuration.nix
   ];
 
-  boot.supportedFilesystems = ["zfs"];
-  boot.initrd.supportedFilesystems = ["zfs"];
-  boot.zfs.requestEncryptionCredentials = true;
+  dan = true;
+
+  services = {
+    tailscale = {
+      enable = true;
+      authKeyFile = config.sops.secrets.tailscaleAuthKey.path;
+    };
+
+    external-smtp = {
+      enable = true;
+      smtp = {
+        to = "takina-alerts@danielraybone.com";
+        from = "no-reply@danielraybone.com";
+        host = "smtp.protonmail.ch";
+        port = "587";
+        username = "no-reply@danielraybone.com";
+        passwordFile = config.sops.secrets.mailPassword.path;
+      };
+    };
+
+    openssh.enable = true;
+    config-git-deploy.enable = false;
+
+    zfs.zed = {
+      enableMail = true;
+      settings = {
+        ZED_EMAIL_ADDR = ["root"];
+      };
+    };
+  };
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
@@ -15,38 +43,49 @@
       tailscaleAuthKey = {};
       tailscaleClientId = {};
       tailscaleClientSecret = {};
+      # "grafana/username" = {};
+      # "grafana/password" = {};
+      "discordWebhookUrl" = {};
       "spqtify/b2_bucket_id" = {};
       "spqtify/b2_application_key_id" = {};
       "spqtify/b2_application_key" = {};
+      mailPassword = {};
+      borgRepoKey = {};
+      "palworld/jame/admin-password" = {};
+      "palworld/jame/server-password" = {};
+      "palworld/jame/discord-webhook-url" = {};
       tlsCrt = {
         format = "binary";
-        sopsFile = ./secrets/ssl/origin-cert.pem;
+        sopsFile = ./secrets/ssl/kirsi-dev.pem;
       };
       tlsKey = {
         format = "binary";
-        sopsFile = ./secrets/ssl/private-key.pem;
+        sopsFile = ./secrets/ssl/kirsi-dev-key.pem;
       };
     };
-    age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
+    age.sshKeyPaths = ["/root/.ssh/takina_ed25519"];
   };
 
-  dan = true;
+  system.borgbackup.daily = {
+    enable = true;
+    repo = "ssh://u474421-sub5@u474421-sub5.your-storagebox.de:23/./backups";
+    discordNotificationWebhook = config.sops.secrets.discordWebhookUrl.path;
+    borgRemotePath = "borg-1.4";
+    extraPaths = [
+      "/opt/data"
+      "/opt/kubernetes"
+    ];
+  };
 
   homelab = {
-    enable = false;
+    enable = true;
     domain = "kirsi.dev";
     settings.disableServicelb = false;
+    #   cnpg.enable = true;
+    #   mysql.enable = true;
+    #   dragonfly.enable = true;
+
     glance.enable = true;
-    # glance.domain = "glance.kirsi.dev";
-    spqtify = {
-      enable = true;
-      domain = "dev.spqtify.com";
-      b2 = {
-        b2_bucket_id = config.sops.placeholder."spqtify/b2_bucket_id";
-        b2_application_key_id = config.sops.placeholder."spqtify/b2_application_key_id";
-        b2_application_key = config.sops.placeholder."spqtify/b2_application_key";
-      };
-    };
     tailscale = {
       enable = true;
       oauth = {
@@ -54,6 +93,121 @@
         clientSecret = config.sops.placeholder.tailscaleClientSecret;
       };
     };
+    palworld = {
+      enable = true;
+      servers = {
+        jame = {
+          dataPath = "/opt/games/palworld/jame";
+          storageSize = "30Gi";
+          ports.server = 8211;
+          service = {
+            type = "LoadBalancer";
+            exposeQuery = false;
+            exposeRestApi = false;
+            exposeRcon = false;
+          };
+          environment = {
+            SERVER_NAME = "jame";
+            SERVER_DESCRIPTION = "jame";
+            PLAYERS = 12;
+            COMMUNITY = false;
+            AUTO_UPDATE_ENABLED = true;
+
+            ENABLE_PLAYER_LOGGING = true;
+            REST_API_ENABLED = true;
+            AUTO_REBOOT_ENABLED = true;
+
+            BACKUP_ENABLED = true;
+            DELETE_OLD_BACKUPS = true;
+            OLD_BACKUP_DAYS = 5;
+            ENABLE_PERF_THREADING_ARGS = true;
+
+            PAL_EGG_DEFAULT_HATCHING_TIME = "1.000000";
+            EXP_RATE = "2";
+          };
+          secretEnvironment = {
+            ADMIN_PASSWORD =
+              config.sops.placeholder."palworld/jame/admin-password";
+            SERVER_PASSWORD =
+              config.sops.placeholder."palworld/jame/server-password";
+            DISCORD_WEBHOOK_URL =
+              config.sops.placeholder."palworld/jame/discord-webhook-url";
+          };
+        };
+      };
+    };
+
+    minecraft = {
+      enable = true;
+      defaultServer = "limbo";
+      servers = {
+        limbo = {
+          domain = "limbo.avrg.dev";
+          dataPath = "/opt/games/minecraft/limbo";
+          storageSize = "2Gi";
+          javaVersion = 21;
+          environment = {
+            TYPE = "CUSTOM";
+            CUSTOM_SERVER = "https://ci.loohpjames.com/job/Limbo/lastStableBuild/artifact/target/Limbo-2026.0.2-ALPHA-26.2.jar";
+            MEMORY = "1G";
+          };
+        };
+
+        adham = {
+          directPort = 25566;
+          dataPath = "/opt/games/minecraft/adham";
+          storageSize = "20Gi";
+          javaVersion = 17;
+          environment = {
+            TYPE = "FABRIC";
+            VERSION = "1.20.1";
+            FABRIC_LOADER_VERSION = "0.18.4";
+            MEMORY = "10G";
+          };
+        };
+      };
+    };
+
+    spqtify = {
+      enable = true;
+      domain = "open.spqtify.com";
+      b2 = {
+        b2_bucket_id = config.sops.placeholder."spqtify/b2_bucket_id";
+        b2_application_key_id = config.sops.placeholder."spqtify/b2_application_key_id";
+        b2_application_key = config.sops.placeholder."spqtify/b2_application_key";
+      };
+    };
+    #   # monitoring = {
+    #   #   prometheus-stack = {
+    #   #     enable = true;
+    #   #     grafanaUser = config.sops.placeholder."grafana/username";
+    #   #     grafanaPassword = config.sops.placeholder."grafana/password";
+    #   #     discordWebhookUrl = config.sops.placeholder.discordWebhookUrl;
+    #   #     mail = {
+    #   #       to = "kurumi-alerts@danielraybone.com";
+    #   #       from = "no-reply@danielraybone.com";
+    #   #       host = "smtp.protonmail.ch:587";
+    #   #       username = "no-reply@danielraybone.com";
+    #   #       password = config.sops.placeholder.mailPassword;
+    #   #     };
+    #   #   };
+    #   # };
+    #
+    #   # forgejo = {
+    #   #   enable = true;
+    #   #   db.backup.enable = true;
+    #   #   admin = {
+    #   #     username = "dan";
+    #   #     email = "forgejo@danielraybone.com";
+    #   #     password = config.sops.placeholder.danPasswordNoHash;
+    #   #   };
+    #   # };
+    #
+    #   # garage = {
+    #   #   enable = true;
+    #   #   adminToken = config.sops.placeholder."garage/adminToken";
+    #   #   storage.dataSize = "100Gi";
+    #   # };
     traefik = {
       tls = {
         crt = config.sops.placeholder.tlsCrt;
@@ -63,55 +217,28 @@
   };
 
   networking = {
-    hostId = "c2ecfdd9";
     hostName = "takina";
-    useDHCP = false;
-    useNetworkd = true;
     firewall = {
-      enable = true;
-      allowedTCPPorts = [443];
+      trustedInterfaces = ["tailscale0"];
+      allowedTCPPorts = [22 443];
+      allowedUDPPorts = [config.services.tailscale.port];
     };
-  };
-
-  systemd.network = {
-    enable = true;
-
-    networks."10-wan" = {
-      matchConfig.MACAddress = "AA:BB:CC:DD:EE:FF";
-      address = [
-        "88.99.214.224/32"
-      ];
-      routes = [
-        {
-          Gateway = "172.31.1.1";
-          GatewayOnLink = true;
-        }
-      ];
-    };
-  };
-
-  services = {
-    config-git-deploy.enable = true;
-
-    openssh = {
-      enable = true;
-      settings = {
-        PermitRootLogin = "prohibit-password";
-        PasswordAuthentication = false;
-      };
-    };
-
-    tailscale = {
-      enable = true;
-      authKeyFile = config.sops.secrets.tailscaleAuthKey.path;
-    };
+    hostId = "e93c338c";
+    useDHCP = true;
+    interfaces.enp4s0.useDHCP = true;
+    nameservers = ["1.1.1.1" "1.0.0.1"];
   };
 
   nixpkgs.hostPlatform = "x86_64-linux";
 
-  boot.loader = {
-    efi.canTouchEfiVariables = true;
-    systemd-boot.enable = true;
+  boot = {
+    loader = {
+      efi.canTouchEfiVariables = true;
+      limine = {
+        enable = true;
+        maxGenerations = 5;
+      };
+    };
   };
 
   system.stateVersion = "23.11";
