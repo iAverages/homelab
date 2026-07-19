@@ -158,6 +158,11 @@
           dataPath = "/opt/games/minecraft/adham";
           storageSize = "20Gi";
           javaVersion = 17;
+          autoRestart = {
+            enable = true;
+            time = "04:00";
+            timeZone = "UTC";
+          };
           environment = {
             TYPE = "FABRIC";
             VERSION = "1.20.1";

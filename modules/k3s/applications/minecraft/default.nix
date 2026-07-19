@@ -9,6 +9,7 @@
   minecraftPort = 25565;
 
   serverNames = lib.attrNames cfg.servers;
+  autoRestartServerNames = lib.filter (name: cfg.servers.${name}.autoRestart.enable) serverNames;
   proxiedServerNames = lib.filter (name: cfg.servers.${name}.directPort == null) serverNames;
   directPorts = lib.filter (port: port != null) (map (name: cfg.servers.${name}.directPort) serverNames);
   nameRegex = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$";
@@ -16,6 +17,22 @@
     builtins.match nameRegex name != null && builtins.stringLength name <= 53;
 
   serverServiceName = name: "minecraft-${name}";
+  restartServiceAccountName = "minecraft-restart";
+  restartResourceName = name:
+    if builtins.stringLength name <= 41
+    then "mc-restart-${name}"
+    else "mc-restart-${builtins.substring 0 32 name}-${builtins.substring 0 8 (builtins.hashString "sha256" name)}";
+  parseTwoDigits = value: builtins.fromJSON (lib.removePrefix "0" (builtins.substring 0 2 value));
+  restartSchedule = time: let
+    restartMinutes = parseTwoDigits time * 60 + parseTwoDigits (builtins.substring 3 2 time);
+    rawWarningMinutes = restartMinutes - 5;
+    warningMinutes =
+      if rawWarningMinutes < 0
+      then rawWarningMinutes + 1440
+      else rawWarningMinutes;
+    warningHour = builtins.div warningMinutes 60;
+    warningMinute = warningMinutes - warningHour * 60;
+  in "${toString warningMinute} ${toString warningHour} * * *";
   serverLabels = name: {
     "app.kubernetes.io/name" = "minecraft-server";
     "app.kubernetes.io/instance" = name;
@@ -222,6 +239,118 @@
     ]
   );
 
+  mkRestartResource = name: let
+    server = cfg.servers.${name};
+    labels = {
+      "app.kubernetes.io/name" = "minecraft-restart";
+      "app.kubernetes.io/instance" = name;
+    };
+    restartScript = ''
+      set -eu
+
+      namespace=${lib.escapeShellArg namespace}
+      selector=${lib.escapeShellArg "app.kubernetes.io/name=minecraft-server,app.kubernetes.io/instance=${name}"}
+
+      get_pod() {
+        kubectl get pods \
+          --namespace "$namespace" \
+          --selector "$selector" \
+          --field-selector status.phase=Running \
+          --output 'jsonpath={.items[0].metadata.name}'
+      }
+
+      send_command() {
+        attempts=0
+        until kubectl exec --namespace "$namespace" "$pod" --container minecraft -- rcon-cli "$1"; do
+          attempts=$((attempts + 1))
+          if [ "$attempts" -ge 12 ]; then
+            return 1
+          fi
+          sleep 5
+        done
+      }
+
+      pod=$(get_pod)
+      if [ -z "$pod" ]; then
+        echo "No running Minecraft pod found for $selector" >&2
+        exit 1
+      fi
+
+      send_command ${lib.escapeShellArg "say ${server.autoRestart.warningMessage}"}
+      sleep 300
+
+      pod=$(get_pod)
+      if [ -z "$pod" ]; then
+        echo "No running Minecraft pod found for $selector after warning delay" >&2
+        exit 1
+      fi
+
+      send_command ${lib.escapeShellArg "say ${server.autoRestart.restartMessage}"}
+      restart_count=$(kubectl get pod --namespace "$namespace" "$pod" --output 'jsonpath={.status.containerStatuses[?(@.name=="minecraft")].restartCount}')
+      if [ -z "$restart_count" ]; then
+        echo "Could not read Minecraft container restart count for $pod" >&2
+        exit 1
+      fi
+
+      kubectl exec --namespace "$namespace" "$pod" --container minecraft -- rcon-cli stop || true
+
+      attempts=0
+      while [ "$attempts" -lt 120 ]; do
+        if ! kubectl get pod --namespace "$namespace" "$pod" >/dev/null 2>&1; then
+          exit 0
+        fi
+
+        current_restart_count=$(kubectl get pod --namespace "$namespace" "$pod" --output 'jsonpath={.status.containerStatuses[?(@.name=="minecraft")].restartCount}')
+        if [ -n "$current_restart_count" ] && [ "$current_restart_count" -gt "$restart_count" ]; then
+          kubectl delete pod --namespace "$namespace" "$pod" --wait=true --timeout=120s
+          exit 0
+        fi
+
+        attempts=$((attempts + 1))
+        sleep 1
+      done
+
+      echo "Minecraft container in $pod did not stop within 120 seconds" >&2
+      exit 1
+    '';
+  in {
+    apiVersion = "batch/v1";
+    kind = "CronJob";
+    metadata = {
+      name = restartResourceName name;
+      inherit namespace labels;
+    };
+    spec = {
+      schedule = restartSchedule server.autoRestart.time;
+      timeZone = server.autoRestart.timeZone;
+      concurrencyPolicy = "Forbid";
+      startingDeadlineSeconds = 60;
+      successfulJobsHistoryLimit = 1;
+      failedJobsHistoryLimit = 1;
+      jobTemplate.spec = {
+        backoffLimit = 0;
+        activeDeadlineSeconds = 900;
+        ttlSecondsAfterFinished = 86400;
+        template = {
+          metadata.labels = labels;
+          spec = {
+            serviceAccountName = restartServiceAccountName;
+            restartPolicy = "Never";
+            containers = [
+              {
+                name = "restart";
+                image = "docker.io/alpine/k8s:1.35.4";
+                imagePullPolicy = "IfNotPresent";
+                command = ["/bin/sh" "-c"];
+                args = [restartScript];
+              }
+            ];
+          };
+        };
+      };
+    };
+  };
+
   mkServerResources = name: let
     server = cfg.servers.${name};
     labels = serverLabels name;
@@ -239,6 +368,10 @@
       // lib.optionalAttrs (server.jarUrl != null) {
         TYPE = "CUSTOM";
         CUSTOM_SERVER = server.jarUrl;
+      }
+      // lib.optionalAttrs server.autoRestart.enable {
+        ENABLE_RCON = true;
+        RCON_PASSWORD = server.environment.RCON_PASSWORD or "minecraft";
       };
   in [
     {
@@ -292,6 +425,7 @@
         template = {
           metadata.labels = labels;
           spec = {
+            restartPolicy = "Always";
             containers = [
               {
                 name = "minecraft";
@@ -393,6 +527,29 @@ in {
             default = null;
             description = "HAProxy PROXY protocol version to send to this Minecraft server.";
           };
+          autoRestart = {
+            enable = lib.mkEnableOption "daily graceful restarts for this Minecraft server";
+            time = lib.mkOption {
+              type = types.strMatching "^([01][0-9]|2[0-3]):[0-5][0-9]$";
+              default = "04:00";
+              description = "Daily restart time for this server in 24-hour HH:MM format.";
+            };
+            timeZone = lib.mkOption {
+              type = types.str;
+              default = "UTC";
+              description = "Timezone used to interpret this server's daily restart time.";
+            };
+            warningMessage = lib.mkOption {
+              type = types.str;
+              default = "Server restarting in 5 minutes.";
+              description = "Chat message sent five minutes before this server restarts.";
+            };
+            restartMessage = lib.mkOption {
+              type = types.str;
+              default = "Server restarting now.";
+              description = "Chat message sent immediately before this server restarts.";
+            };
+          };
           environment = lib.mkOption {
             type = types.attrsOf environmentValueType;
             default = {};
@@ -443,6 +600,56 @@ in {
           apiVersion = "v1";
           kind = "Namespace";
           metadata.name = namespace;
+        }
+      ]
+      ++ lib.optionals (autoRestartServerNames != []) [
+        {
+          apiVersion = "v1";
+          kind = "ServiceAccount";
+          metadata = {
+            name = restartServiceAccountName;
+            inherit namespace;
+          };
+        }
+        {
+          apiVersion = "rbac.authorization.k8s.io/v1";
+          kind = "Role";
+          metadata = {
+            name = restartServiceAccountName;
+            inherit namespace;
+          };
+          rules = [
+            {
+              apiGroups = [""];
+              resources = ["pods"];
+              verbs = ["get" "list" "delete"];
+            }
+            {
+              apiGroups = [""];
+              resources = ["pods/exec"];
+              verbs = ["create"];
+            }
+          ];
+        }
+        {
+          apiVersion = "rbac.authorization.k8s.io/v1";
+          kind = "RoleBinding";
+          metadata = {
+            name = restartServiceAccountName;
+            inherit namespace;
+          };
+          roleRef = {
+            apiGroup = "rbac.authorization.k8s.io";
+            kind = "Role";
+            name = restartServiceAccountName;
+          };
+          subjects = [
+            {
+              kind = "ServiceAccount";
+              name = restartServiceAccountName;
+              inherit namespace;
+            }
+          ];
         }
       ]
       ++ lib.optionals (proxiedServerNames != []) [
@@ -533,6 +740,7 @@ in {
           };
         }
       ]
-      ++ lib.concatMap mkServerResources serverNames;
+      ++ lib.concatMap mkServerResources serverNames
+      ++ map mkRestartResource autoRestartServerNames;
   };
 }
