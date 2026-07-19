@@ -27,6 +27,69 @@
     openssh.enable = true;
     config-git-deploy.enable = false;
 
+    k3s.manifests.flux-sync.content = [
+      {
+        apiVersion = "source.toolkit.fluxcd.io/v1";
+        kind = "GitRepository";
+        metadata = {
+          name = "deployments";
+          namespace = "flux-system";
+        };
+        spec = {
+          interval = "1m";
+          url = "ssh://git@github.com/iAverages/takina-deployments.git";
+          ref.branch = "main";
+          secretRef.name = "deployments-git-auth";
+        };
+      }
+      {
+        apiVersion = "kustomize.toolkit.fluxcd.io/v1";
+        kind = "Kustomization";
+        metadata = {
+          name = "takina";
+          namespace = "flux-system";
+        };
+        spec = {
+          interval = "5m";
+          retryInterval = "1m";
+          timeout = "5m";
+          path = "./clusters/takina";
+          prune = true;
+          wait = true;
+          sourceRef = {
+            kind = "GitRepository";
+            name = "deployments";
+          };
+          decryption = {
+            provider = "sops";
+            secretRef.name = "sops-age";
+          };
+        };
+      }
+    ];
+
+    k3s.secrets = [
+      {
+        metadata = {
+          name = "deployments-git-auth";
+          namespace = "flux-system";
+        };
+        data.identity = config.sops.placeholder."flux/deployments/identity";
+        stringData = {
+          "identity.pub" = builtins.readFile ./flux-deployments.pub;
+          known_hosts = builtins.readFile ./github-known-hosts;
+        };
+      }
+      {
+        metadata = {
+          name = "sops-age";
+          namespace = "flux-system";
+        };
+        data."age.agekey" =
+          config.sops.placeholder."flux/sops-age-key";
+      }
+    ];
+
     zfs.zed = {
       enableMail = true;
       settings = {
@@ -54,6 +117,14 @@
       "palworld/jame/admin-password" = {};
       "palworld/jame/server-password" = {};
       "palworld/jame/discord-webhook-url" = {};
+      "flux/deployments/identity" = {
+        format = "binary";
+        sopsFile = ./secrets/flux-deployment-identity;
+      };
+      "flux/sops-age-key" = {
+        format = "binary";
+        sopsFile = ./secrets/flux-sops-age-key;
+      };
       tlsCrt = {
         format = "binary";
         sopsFile = ./secrets/ssl/kirsi-dev.pem;
@@ -81,6 +152,7 @@
     enable = true;
     domain = "kirsi.dev";
     settings.disableServicelb = false;
+    flux.enable = true;
     #   cnpg.enable = true;
     #   mysql.enable = true;
     #   dragonfly.enable = true;
@@ -174,7 +246,7 @@
     };
 
     spqtify = {
-      enable = true;
+      enable = false;
       domain = "open.spqtify.com";
       b2 = {
         b2_bucket_id = config.sops.placeholder."spqtify/b2_bucket_id";

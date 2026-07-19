@@ -43,6 +43,7 @@
     in {
       default = pkgs.mkShell {
         packages = with pkgs; [
+          fluxcd
           kubectl
           kubectx
           sops

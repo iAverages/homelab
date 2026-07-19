@@ -35,6 +35,10 @@ in {
             name = lib.mkOption {type = lib.types.str;};
             namespace = lib.mkOption {type = lib.types.nullOr lib.types.str;};
           };
+          data = lib.mkOption {
+            type = lib.types.attrsOf lib.types.str;
+            default = {};
+          };
           stringData = lib.mkOption {
             type = lib.types.attrsOf lib.types.str;
           };
@@ -54,6 +58,7 @@ in {
             kind = "Secret";
             inherit (secret) type;
             inherit (secret) metadata;
+            inherit (secret) data;
             inherit (secret) stringData;
           };
           path = "/var/lib/rancher/k3s/server/manifests/${secret.metadata.name}.json";
