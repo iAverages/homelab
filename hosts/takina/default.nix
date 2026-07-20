@@ -143,8 +143,7 @@
     discordNotificationWebhook = config.sops.secrets.discordWebhookUrl.path;
     borgRemotePath = "borg-1.4";
     extraPaths = [
-      "/opt/data"
-      "/opt/kubernetes"
+      "/opt"
     ];
   };
 
