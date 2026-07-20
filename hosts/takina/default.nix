@@ -134,7 +134,7 @@
         sopsFile = ./secrets/ssl/kirsi-dev-key.pem;
       };
     };
-    age.sshKeyPaths = ["/root/.ssh/takina_ed25519"];
+    age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
   };
 
   system.borgbackup.daily = {
