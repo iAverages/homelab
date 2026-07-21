@@ -26,6 +26,16 @@
       "directory mask" = "0770";
     };
 
+    family = {
+      path = "/opt/data/family";
+      browseable = "yes";
+      "read only" = "no";
+      "guest ok" = "no";
+      "force user" = "dan";
+      "create mask" = "0660";
+      "directory mask" = "0770";
+    };
+
     riley = {
       path = "/opt/data/done/media/videos/anime/call of the night season 2";
       browseable = "yes";
@@ -112,8 +122,6 @@ in {
     systemd.services.set-samba-passwords = {
       enable = true;
       description = "set samba passwords for users";
-      after = ["sops-install-secrets.service"];
-      requires = ["sops-install-secrets.service"];
       wantedBy = ["multi-user.target"];
 
       serviceConfig = {
@@ -121,9 +129,9 @@ in {
         RemainAfterExit = true;
       };
       script = lib.concatStringsSep "\n" (lib.mapAttrsToList (name: userConfig: ''
-          ${pkgs.coreutils}/bin/printf \
-          "$(${pkgs.coreutils}/bin/cat ${userConfig.passwordFile})\n$(${pkgs.coreutils}/bin/cat ${userConfig.passwordFile})" \
-          | smbpasswd -s dan
+          password="$(${pkgs.coreutils}/bin/cat ${userConfig.passwordFile})"
+          ${pkgs.coreutils}/bin/printf '%s\n%s\n' "$password" "$password" \
+            | ${pkgs.samba4Full}/bin/smbpasswd -s -a ${lib.escapeShellArg name}
         '')
         sambaEnabledUsers);
     };

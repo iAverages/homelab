@@ -105,6 +105,7 @@
       };
       danPassword = {};
       danPasswordNoHash = {};
+      familyPasswordNoHash = {};
       tailscaleAuthKey = {};
       tailscaleClientId = {};
       tailscaleClientSecret = {};
@@ -162,9 +163,22 @@
     age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
   };
 
-  samba.users.dan = {
-    passwordFile = config.sops.secrets.danPasswordNoHash.path;
-    allowedShares = ["data"];
+  samba.users = {
+    dan = {
+      passwordFile = config.sops.secrets.danPasswordNoHash.path;
+      allowedShares = ["data" "family"];
+    };
+
+    family = {
+      passwordFile = config.sops.secrets.familyPasswordNoHash.path;
+      allowedShares = ["family"];
+    };
+  };
+
+  users.groups.family = {};
+  users.users.family = {
+    isSystemUser = true;
+    group = "family";
   };
 
   system.borgbackup.daily = {
