@@ -24,7 +24,10 @@
       };
     };
 
-    openssh.enable = true;
+    openssh = {
+      enable = true;
+      openFirewall = false;
+    };
     config-git-deploy.enable = false;
 
     k3s.manifests.flux-sync.content = [
@@ -296,7 +299,7 @@
     hostName = "takina";
     firewall = {
       trustedInterfaces = ["tailscale0"];
-      allowedTCPPorts = [22 443];
+      allowedTCPPorts = [443];
       allowedUDPPorts = [config.services.tailscale.port];
     };
     hostId = "e93c338c";
