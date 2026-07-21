@@ -69,6 +69,69 @@
     openssh.enable = true;
     config-git-deploy.enable = false;
 
+    k3s.manifests.flux-sync.content = [
+      {
+        apiVersion = "source.toolkit.fluxcd.io/v1";
+        kind = "GitRepository";
+        metadata = {
+          name = "deployments";
+          namespace = "flux-system";
+        };
+        spec = {
+          interval = "1m";
+          url = "ssh://git@github.com/iAverages/takina-deployments.git";
+          ref.branch = "main";
+          secretRef.name = "deployments-git-auth";
+        };
+      }
+      {
+        apiVersion = "kustomize.toolkit.fluxcd.io/v1";
+        kind = "Kustomization";
+        metadata = {
+          name = "kurumi";
+          namespace = "flux-system";
+        };
+        spec = {
+          interval = "5m";
+          retryInterval = "1m";
+          timeout = "5m";
+          path = "./clusters/kurumi";
+          prune = true;
+          wait = true;
+          sourceRef = {
+            kind = "GitRepository";
+            name = "deployments";
+          };
+          decryption = {
+            provider = "sops";
+            secretRef.name = "sops-age";
+          };
+        };
+      }
+    ];
+
+    k3s.secrets = [
+      {
+        metadata = {
+          name = "deployments-git-auth";
+          namespace = "flux-system";
+        };
+        data.identity = config.sops.placeholder."flux/deployments/identity";
+        stringData = {
+          "identity.pub" = builtins.readFile ./flux-deployments.pub;
+          known_hosts = builtins.readFile ./github-known-hosts;
+        };
+      }
+      {
+        metadata = {
+          name = "sops-age";
+          namespace = "flux-system";
+        };
+        data."age.agekey" =
+          config.sops.placeholder."flux/sops-age-key";
+      }
+    ];
+
     zfs.zed = {
       enableMail = true;
       settings = {
@@ -109,6 +172,14 @@
       tailscaleAuthKey = {};
       tailscaleClientId = {};
       tailscaleClientSecret = {};
+      "flux/deployments/identity" = {
+        format = "binary";
+        sopsFile = ./secrets/flux-deployment-identity;
+      };
+      "flux/sops-age-key" = {
+        format = "binary";
+        sopsFile = ./secrets/flux-sops-age-key;
+      };
       "pihole/password" = {};
       "zigbee2mqtt/mqtt/password" = {};
       "grafana/username" = {};
@@ -197,13 +268,14 @@
   homelab = {
     enable = true;
     domain = "dan.lan";
+    flux.enable = true;
     actual-budget.enable = true;
     shiori.enable = true;
     metallb.enable = true;
     metallb.addresses = ["192.168.1.11-192.168.1.149"];
-    cnpg.enable = true;
-    mysql.enable = true;
-    dragonfly.enable = true;
+    cnpg.enable = false;
+    mysql.enable = false;
+    dragonfly.enable = false;
     paperless.enable = true;
     glance.enable = true;
     home-assistant.enable = true;
@@ -236,7 +308,7 @@
     };
 
     forgejo = {
-      enable = true;
+      enable = false;
       db.backup.enable = true;
       admin = {
         username = "dan";
@@ -246,7 +318,7 @@
     };
 
     garage = {
-      enable = true;
+      enable = false;
       adminToken = config.sops.placeholder."garage/adminToken";
       storage.dataSize = "100Gi";
     };
@@ -277,7 +349,7 @@
       cdnUrl = "https://cdn.avrg.dev/";
     };
     vaultwarden = {
-      enable = true;
+      enable = false;
       pushNotifications = {
         installationId = config.sops.placeholder."vaultwarden/pushNotifications/installationId";
         installationKey = config.sops.placeholder."vaultwarden/pushNotifications/installationKey";
