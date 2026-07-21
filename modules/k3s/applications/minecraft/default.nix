@@ -286,32 +286,7 @@
       fi
 
       send_command ${lib.escapeShellArg "say ${server.autoRestart.restartMessage}"}
-      restart_count=$(kubectl get pod --namespace "$namespace" "$pod" --output 'jsonpath={.status.containerStatuses[?(@.name=="minecraft")].restartCount}')
-      if [ -z "$restart_count" ]; then
-        echo "Could not read Minecraft container restart count for $pod" >&2
-        exit 1
-      fi
-
-      kubectl exec --namespace "$namespace" "$pod" --container minecraft -- rcon-cli stop || true
-
-      attempts=0
-      while [ "$attempts" -lt 120 ]; do
-        if ! kubectl get pod --namespace "$namespace" "$pod" >/dev/null 2>&1; then
-          exit 0
-        fi
-
-        current_restart_count=$(kubectl get pod --namespace "$namespace" "$pod" --output 'jsonpath={.status.containerStatuses[?(@.name=="minecraft")].restartCount}')
-        if [ -n "$current_restart_count" ] && [ "$current_restart_count" -gt "$restart_count" ]; then
-          kubectl delete pod --namespace "$namespace" "$pod" --wait=true --timeout=120s
-          exit 0
-        fi
-
-        attempts=$((attempts + 1))
-        sleep 1
-      done
-
-      echo "Minecraft container in $pod did not stop within 120 seconds" >&2
-      exit 1
+      kubectl delete pod --namespace "$namespace" "$pod" --wait=true --timeout=150s
     '';
   in {
     apiVersion = "batch/v1";
@@ -412,19 +387,20 @@
     }
     {
       apiVersion = "apps/v1";
-      kind = "Deployment";
+      kind = "StatefulSet";
       metadata = {
         name = serviceName;
         namespace = namespace;
         labels = labels;
       };
       spec = {
+        serviceName = serviceName;
         replicas = 1;
-        strategy.type = "Recreate";
         selector.matchLabels = labels;
         template = {
           metadata.labels = labels;
           spec = {
+            terminationGracePeriodSeconds = 120;
             restartPolicy = "Always";
             containers = [
               {
