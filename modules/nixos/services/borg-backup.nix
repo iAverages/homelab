@@ -40,6 +40,7 @@ in {
     encryption.passCommand = "cat ${config.sops.secrets.borgRepoKey.path}";
     compression = "auto,lzma";
     startAt = "daily";
+    failOnWarnings = false;
     # doInit = true;
 
     extraArgs =
