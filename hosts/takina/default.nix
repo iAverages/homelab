@@ -288,6 +288,7 @@
     #   #   storage.dataSize = "100Gi";
     #   # };
     traefik = {
+      cloudflareOnly = true;
       tls = {
         crt = config.sops.placeholder.tlsCrt;
         key = config.sops.placeholder.tlsKey;
@@ -299,7 +300,7 @@
     hostName = "takina";
     firewall = {
       trustedInterfaces = ["tailscale0"];
-      allowedTCPPorts = [443];
+      allowedTCPPorts = [22];
       allowedUDPPorts = [config.services.tailscale.port];
     };
     hostId = "e93c338c";
