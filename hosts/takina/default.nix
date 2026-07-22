@@ -40,7 +40,7 @@
         };
         spec = {
           interval = "1m";
-          url = "ssh://git@github.com/iAverages/takina-deployments.git";
+          url = "ssh://git@ssh.github.com:443/iAverages/takina-deployments.git";
           ref.branch = "main";
           secretRef.name = "deployments-git-auth";
         };
