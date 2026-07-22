@@ -195,6 +195,7 @@
             DELETE_OLD_BACKUPS = true;
             OLD_BACKUP_DAYS = 5;
             ENABLE_PERF_THREADING_ARGS = true;
+            BASE_CAMP_MAX_NUM_IN_GUILD = 5;
 
             PAL_EGG_DEFAULT_HATCHING_TIME = "1.000000";
             EXP_RATE = "2";
