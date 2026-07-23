@@ -196,6 +196,7 @@
             OLD_BACKUP_DAYS = 5;
             ENABLE_PERF_THREADING_ARGS = true;
             BASE_CAMP_MAX_NUM_IN_GUILD = 5;
+            BASE_CAMP_WORKER_MAX_NUM = 30;
 
             PAL_EGG_DEFAULT_HATCHING_TIME = "1.000000";
             EXP_RATE = "2";
@@ -242,6 +243,18 @@
             TYPE = "FABRIC";
             VERSION = "1.20.1";
             FABRIC_LOADER_VERSION = "0.18.4";
+            MEMORY = "10G";
+          };
+        };
+
+        mygo = {
+          domain = "mygo.avrg.dev";
+          dataPath = "/opt/games/minecraft/mygo";
+          storageSize = "50Gi";
+          javaVersion = 25;
+          environment = {
+            TYPE = "PAPER";
+            VERSION = "26.2";
             MEMORY = "10G";
           };
         };
