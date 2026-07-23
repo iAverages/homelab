@@ -99,7 +99,6 @@ in {
   config = {
     services = {
       samba = {
-        package = pkgs.samba4Full;
         enable = true;
         openFirewall = true;
         settings =
@@ -131,7 +130,7 @@ in {
       script = lib.concatStringsSep "\n" (lib.mapAttrsToList (name: userConfig: ''
           password="$(${pkgs.coreutils}/bin/cat ${userConfig.passwordFile})"
           ${pkgs.coreutils}/bin/printf '%s\n%s\n' "$password" "$password" \
-            | ${pkgs.samba4Full}/bin/smbpasswd -s -a ${lib.escapeShellArg name}
+            | ${config.services.samba.package}/bin/smbpasswd -s -a ${lib.escapeShellArg name}
         '')
         sambaEnabledUsers);
     };
