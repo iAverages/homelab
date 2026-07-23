@@ -10,6 +10,13 @@ keys:
   - &takina age1qglyxddmddvfdw94ukdgd9xut4kz7k2u2mt7rgeuvseekvzlj3cs9ntlws
 
 creation_rules:
+  - path_regex: infra/secrets/.*\.sops\.ya?ml$
+    key_groups:
+      - age:
+          - *izanami
+          - *kirsi
+          - *kirsi-wsl
+
   - path_regex: hosts/kurumi/secrets/.*
     key_groups:
       - age:

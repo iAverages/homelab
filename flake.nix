@@ -55,6 +55,19 @@
               ]
           ))
         ];
+
+        shellHook = ''
+          tofu_repo_root="$PWD"
+          while [[ "$tofu_repo_root" != / && ! -x "$tofu_repo_root/scripts/tofu" ]]; do
+            tofu_repo_root="$(dirname "$tofu_repo_root")"
+          done
+
+          if [[ -x "$tofu_repo_root/scripts/tofu" ]]; then
+            export PATH="$tofu_repo_root/scripts:$PATH"
+          fi
+
+          unset tofu_repo_root
+        '';
       };
     });
   };

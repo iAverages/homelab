@@ -1,7 +1,7 @@
 result
 .direnv
 **.terraform*
-# temp until I setup s3 state file
-**/terraform.tfstate* 
+# local tofu state and backend metadata
+**/terraform.tfstate*
 **/.terraform/
 **/*.tfstate*

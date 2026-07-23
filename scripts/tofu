@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+secrets_file="${TOFU_SOPS_ENV_FILE:-$repo_root/infra/secrets/terraform-backend.sops.yaml}"
+
+find_tofu() {
+  if [[ -n "${OPENTOFU_BIN:-}" ]]; then
+    if [[ -x "$OPENTOFU_BIN" ]]; then
+      printf '%s\n' "$OPENTOFU_BIN"
+      return
+    fi
+
+    printf 'error: OPENTOFU_BIN is not executable: %s\n' "$OPENTOFU_BIN" >&2
+    exit 127
+  fi
+
+  local self path_entry candidate
+  local -a path_entries
+  self="$(readlink -f -- "${BASH_SOURCE[0]}")"
+
+  IFS=: read -r -a path_entries <<<"${PATH:-}"
+  for path_entry in "${path_entries[@]}"; do
+    [[ -n "$path_entry" ]] || path_entry="."
+    candidate="$path_entry/tofu"
+
+    if [[ -x "$candidate" && "$(readlink -f -- "$candidate")" != "$self" ]]; then
+      printf '%s\n' "$candidate"
+      return
+    fi
+  done
+
+  printf 'error: real tofu binary not found; set OPENTOFU_BIN\n' >&2
+  exit 127
+}
+
+shell_quote() {
+  local value="${1//\'/\'\\\'\'}"
+  printf "'%s'" "$value"
+}
+
+if [[ ! -f "$secrets_file" ]]; then
+  printf 'error: SOPS env file not found: %s\n' "$secrets_file" >&2
+  exit 1
+fi
+
+if ! command -v sops >/dev/null 2>&1; then
+  printf 'error: sops is required\n' >&2
+  exit 127
+fi
+
+tofu_bin="$(find_tofu)"
+tofu_command="$(shell_quote "$tofu_bin")"
+
+for arg in "$@"; do
+  tofu_command+=" $(shell_quote "$arg")"
+done
+
+exec sops exec-env "$secrets_file" "$tofu_command"
