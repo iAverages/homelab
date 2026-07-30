@@ -532,7 +532,7 @@ in {
                     name = "mc-router";
                     image = "itzg/mc-router";
                     imagePullPolicy = "IfNotPresent";
-                    args = ["--in-kube-cluster"];
+                    args = ["--in-kube-cluster" "--use-proxy-protocol"];
                     ports = [
                       {
                         name = "minecraft";
@@ -557,6 +557,7 @@ in {
           spec = {
             type = "LoadBalancer";
             selector = routerLabels;
+            externalTrafficPolicy = "Local";
             ports = [
               {
                 name = "minecraft";
