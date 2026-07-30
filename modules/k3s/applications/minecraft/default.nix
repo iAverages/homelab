@@ -51,193 +51,34 @@
       value = environmentValueToString value;
     })
     environment;
-  haproxyLabels = {
-    "app.kubernetes.io/name" = "minecraft-haproxy";
+  routerResourceName = "minecraft-router";
+  routerServiceAccountName = "minecraft-router";
+  routerLabels = {
+    "app.kubernetes.io/name" = routerResourceName;
   };
-  defaultBackend =
+  defaultRouterServer =
     if cfg.defaultServer != null
-    then serverServiceName cfg.defaultServer
+    then cfg.defaultServer
     else if builtins.length proxiedServerNames == 1
-    then serverServiceName (lib.head proxiedServerNames)
-    else "minecraft-unmatched";
-  proxyProtocolOption = proxyProtocol:
-    if proxyProtocol == "v1"
-    then " send-proxy"
-    else if proxyProtocol == "v2"
-    then " send-proxy-v2"
-    else "";
-  domainMatcher = server: "{ var(txn.mc_host) -i -m str ${server.domain} }";
-
-  minecraftLua = ''
-    local string_byte = string.byte
-    local string_find = string.find
-    local string_len = string.len
-    local string_sub = string.sub
-
-    local function readable(payload)
-      return string_len(payload.data) - payload.index + 1
-    end
-
-    local function read_varint(payload, max_bytes, nil_on_eof)
-      local value = 0
-      local bytes = 0
-
-      while true do
-        local byte = string_byte(payload.data, payload.index + bytes)
-        if byte == nil then
-          if nil_on_eof then
-            return nil, "need"
-          end
-          return nil, "error"
-        end
-
-        value = value | ((byte & 0x7f) << (bytes * 7))
-        bytes = bytes + 1
-
-        if byte < 0x80 then
-          payload.index = payload.index + bytes
-          return value
-        end
-
-        if bytes >= max_bytes then
-          payload.index = payload.index + bytes
-          return nil, "error"
-        end
-      end
-    end
-
-    local function read_string(payload, max_prefix_bytes, max_len)
-      local length, err = read_varint(payload, max_prefix_bytes, false)
-      if err ~= nil or length > max_len or length > readable(payload) then
-        return nil, "error"
-      end
-
-      local value = string_sub(payload.data, payload.index, payload.index + length - 1)
-      payload.index = payload.index + length
-      return value
-    end
-
-    local function read_handshake(data)
-      local payload = { data = data, index = 1 }
-
-      local packet_len, err = read_varint(payload, 3, true)
-      if err == "need" then
-        return nil
-      end
-      if err ~= nil or packet_len > 267 then
-        return false
-      end
-      if packet_len > readable(payload) then
-        return nil
-      end
-
-      local packet_id
-      packet_id, err = read_varint(payload, 1, false)
-      if err ~= nil or packet_id ~= 0 then
-        return false
-      end
-
-      local protocol_version
-      protocol_version, err = read_varint(payload, 5, false)
-      if err ~= nil or protocol_version <= 0 then
-        return false
-      end
-
-      local host
-      host, err = read_string(payload, 2, 255)
-      if err ~= nil then
-        return false
-      end
-
-      if readable(payload) < 2 then
-        return false
-      end
-      payload.index = payload.index + 2
-
-      local state
-      state, err = read_varint(payload, 1, false)
-      if err ~= nil or (state ~= 1 and state ~= 2 and state ~= 3) then
-        return false
-      end
-
-      local nul = string_find(host, "\0", 1, true)
-      if nul ~= nil then
-        host = string_sub(host, 1, nul - 1)
-      end
-
-      return true, protocol_version, host, state
-    end
-
-    local function mc_handshake(txn)
-      local ok, proto, host, state = read_handshake(txn.req:dup())
-      if ok == nil then
-        return
-      end
-
-      if ok == false then
-        txn:set_var("txn.mc_proto", 0)
-        txn:set_var("txn.mc_host", "")
-        txn:set_var("txn.mc_state", 0)
-        return
-      end
-
-      txn:set_var("txn.mc_proto", proto)
-      txn:set_var("txn.mc_host", host)
-      txn:set_var("txn.mc_state", state)
-    end
-
-    core.register_action("mc_handshake", { "tcp-req" }, mc_handshake, 0)
-  '';
-
-  haproxyConfig = lib.concatStringsSep "\n" (
-    [
-      "global"
-      "  log stdout format raw local0"
-      "  maxconn 2048"
-      "  lua-load /usr/local/etc/haproxy/minecraft.lua"
-      ""
-      "defaults"
-      "  log global"
-      "  mode tcp"
-      "  option tcplog"
-      "  timeout connect 10s"
-      "  timeout client 1h"
-      "  timeout server 1h"
-      ""
-      "frontend minecraft"
-      "  bind *:${toString minecraftPort}"
-      "  tcp-request inspect-delay 5s"
-      "  tcp-request content lua.mc_handshake"
-      "  tcp-request content reject if { var(txn.mc_proto) -m int 0 }"
-      "  tcp-request content accept if { var(txn.mc_proto) -m found }"
-      "  tcp-request content reject if WAIT_END"
-    ]
-    ++ lib.concatMap (name: let
-      server = cfg.servers.${name};
-    in [
-      "  use_backend ${serverServiceName name} if ${domainMatcher server}"
-    ])
-    proxiedServerNames
-    ++ [
-      "  default_backend ${defaultBackend}"
-      ""
-    ]
-    ++ lib.concatMap (name: let
-      server = cfg.servers.${name};
-      serviceName = serverServiceName name;
-    in [
-      "backend ${serviceName}"
-      "  mode tcp"
-      "  server minecraft ${serviceName}.${namespace}.svc.cluster.local:${toString minecraftPort}${proxyProtocolOption server.proxyProtocol}"
-      ""
-    ])
-    proxiedServerNames
-    ++ [
-      "backend minecraft-unmatched"
-      "  mode tcp"
-      ""
-    ]
-  );
+    then lib.head proxiedServerNames
+    else null;
+  routerServiceAnnotations = name:
+    {
+      "mc-router.itzg.me/externalServerName" = cfg.servers.${name}.domain;
+    }
+    // lib.optionalAttrs (defaultRouterServer == name) {
+      "mc-router.itzg.me/defaultServer" = "true";
+    };
+  routerEnv = [
+    {
+      name = "PORT";
+      value = toString minecraftPort;
+    }
+    {
+      name = "KUBE_NAMESPACE";
+      value = namespace;
+    }
+  ];
 
   mkRestartResource = name: let
     server = cfg.servers.${name};
@@ -436,10 +277,14 @@
     {
       apiVersion = "v1";
       kind = "Service";
-      metadata = {
-        name = serviceName;
-        namespace = namespace;
-      };
+      metadata =
+        {
+          name = serviceName;
+          namespace = namespace;
+        }
+        // lib.optionalAttrs (server.directPort == null) {
+          annotations = routerServiceAnnotations name;
+        };
       spec = {
         type =
           if server.directPort != null
@@ -463,7 +308,7 @@ in {
     defaultServer = lib.mkOption {
       type = types.nullOr types.str;
       default = null;
-      description = "Server used when HAProxy cannot match the requested Minecraft domain.";
+      description = "Server used when mc-router cannot match the requested Minecraft domain.";
     };
     servers = lib.mkOption {
       type = types.attrsOf (types.submodule ({name, ...}: {
@@ -471,12 +316,12 @@ in {
           domain = lib.mkOption {
             type = types.nullOr types.str;
             default = null;
-            description = "Domain routed by HAProxy to this Minecraft server; required unless directPort is set.";
+            description = "Domain routed by mc-router to this Minecraft server; required unless directPort is set.";
           };
           directPort = lib.mkOption {
             type = types.nullOr types.port;
             default = null;
-            description = "Optional external TCP port that exposes this server directly instead of through HAProxy.";
+            description = "Optional external TCP port that exposes this server directly instead of through mc-router.";
           };
           jarUrl = lib.mkOption {
             type = types.nullOr types.str;
@@ -497,11 +342,6 @@ in {
             type = types.enum [8 11 16 17 21 25];
             default = 21;
             description = "Java version tag for the itzg/minecraft-server image.";
-          };
-          proxyProtocol = lib.mkOption {
-            type = types.nullOr (types.enum ["v1" "v2"]);
-            default = null;
-            description = "HAProxy PROXY protocol version to send to this Minecraft server.";
           };
           autoRestart = {
             enable = lib.mkEnableOption "daily graceful restarts for this Minecraft server";
@@ -564,7 +404,7 @@ in {
       }
       {
         assertion = proxiedServerNames == [] || lib.all (port: port != minecraftPort) directPorts;
-        message = "homelab.minecraft directPort cannot be 25565 while HAProxy is enabled.";
+        message = "homelab.minecraft directPort cannot be 25565 while mc-router is enabled.";
       }
     ];
 
@@ -631,37 +471,68 @@ in {
       ++ lib.optionals (proxiedServerNames != []) [
         {
           apiVersion = "v1";
-          kind = "ConfigMap";
+          kind = "ServiceAccount";
           metadata = {
-            name = "minecraft-haproxy";
-            namespace = namespace;
+            name = routerServiceAccountName;
+            inherit namespace;
           };
-          data."haproxy.cfg" = haproxyConfig;
-          data."minecraft.lua" = minecraftLua;
+        }
+        {
+          apiVersion = "rbac.authorization.k8s.io/v1";
+          kind = "Role";
+          metadata = {
+            name = routerServiceAccountName;
+            inherit namespace;
+          };
+          rules = [
+            {
+              apiGroups = [""];
+              resources = ["services"];
+              verbs = ["list" "watch"];
+            }
+          ];
+        }
+        {
+          apiVersion = "rbac.authorization.k8s.io/v1";
+          kind = "RoleBinding";
+          metadata = {
+            name = routerServiceAccountName;
+            inherit namespace;
+          };
+          roleRef = {
+            apiGroup = "rbac.authorization.k8s.io";
+            kind = "Role";
+            name = routerServiceAccountName;
+          };
+          subjects = [
+            {
+              kind = "ServiceAccount";
+              name = routerServiceAccountName;
+              inherit namespace;
+            }
+          ];
         }
         {
           apiVersion = "apps/v1";
           kind = "Deployment";
           metadata = {
-            name = "minecraft-haproxy";
+            name = routerResourceName;
             namespace = namespace;
-            labels = haproxyLabels;
+            labels = routerLabels;
           };
           spec = {
             replicas = 1;
-            selector.matchLabels = haproxyLabels;
+            selector.matchLabels = routerLabels;
             template = {
-              metadata = {
-                labels = haproxyLabels;
-                annotations."checksum/config" = builtins.hashString "sha256" (haproxyConfig + minecraftLua);
-              };
+              metadata.labels = routerLabels;
               spec = {
+                serviceAccountName = routerServiceAccountName;
                 containers = [
                   {
-                    name = "haproxy";
-                    image = "haproxy:3.0-alpine";
+                    name = "mc-router";
+                    image = "itzg/mc-router";
                     imagePullPolicy = "IfNotPresent";
-                    args = ["-f" "/usr/local/etc/haproxy/haproxy.cfg"];
+                    args = ["--in-kube-cluster"];
                     ports = [
                       {
                         name = "minecraft";
@@ -669,26 +540,7 @@ in {
                         protocol = "TCP";
                       }
                     ];
-                    volumeMounts = [
-                      {
-                        name = "config";
-                        mountPath = "/usr/local/etc/haproxy/haproxy.cfg";
-                        subPath = "haproxy.cfg";
-                        readOnly = true;
-                      }
-                      {
-                        name = "config";
-                        mountPath = "/usr/local/etc/haproxy/minecraft.lua";
-                        subPath = "minecraft.lua";
-                        readOnly = true;
-                      }
-                    ];
-                  }
-                ];
-                volumes = [
-                  {
-                    name = "config";
-                    configMap.name = "minecraft-haproxy";
+                    env = routerEnv;
                   }
                 ];
               };
@@ -699,12 +551,12 @@ in {
           apiVersion = "v1";
           kind = "Service";
           metadata = {
-            name = "minecraft-haproxy";
+            name = routerResourceName;
             namespace = namespace;
           };
           spec = {
             type = "LoadBalancer";
-            selector = haproxyLabels;
+            selector = routerLabels;
             ports = [
               {
                 name = "minecraft";
