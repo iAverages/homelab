@@ -252,6 +252,11 @@
           dataPath = "/opt/games/minecraft/mygo";
           storageSize = "50Gi";
           javaVersion = 25;
+          autoRestart = {
+            enable = true;
+            time = "03:00";
+            timeZone = "UTC";
+          };
           environment = {
             TYPE = "PAPER";
             VERSION = "26.2";
