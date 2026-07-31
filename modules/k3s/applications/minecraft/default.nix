@@ -522,17 +522,26 @@ in {
           };
           spec = {
             replicas = 1;
+            strategy = {
+              type = "RollingUpdate";
+              rollingUpdate = {
+                maxUnavailable = 0;
+                maxSurge = 1;
+              };
+            };
             selector.matchLabels = routerLabels;
             template = {
               metadata.labels = routerLabels;
               spec = {
+                # 24h + 5m to allow for mc-router to stop naturally
+                terminationGracePeriodSeconds = 86700;
                 serviceAccountName = routerServiceAccountName;
                 containers = [
                   {
                     name = "mc-router";
-                    image = "itzg/mc-router";
+                    image = "git.kirsi.dev/dan/mc-router:415451669a67b06ddce532ba921d93c17003b0e3";
                     imagePullPolicy = "IfNotPresent";
-                    args = ["--in-kube-cluster" "--use-proxy-protocol"];
+                    args = ["--in-kube-cluster" "--use-proxy-protocol" "--drain-on-shutdown" "--drain-timeout=24h"];
                     ports = [
                       {
                         name = "minecraft";
