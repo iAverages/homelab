@@ -226,6 +226,13 @@ in {
         serviceConfig.ExecStartPre = lib.mkAfter [waitForQbittorrent];
       })
       // {
+        wg = {
+          unitConfig.Upholds = "qbittorrent.service";
+          serviceConfig = {
+            Restart = "on-failure";
+            RestartSec = "30s";
+          };
+        };
         qbittorrent.serviceConfig = {
           Restart = "always";
           RestartSec = "5s";
