@@ -210,6 +210,9 @@
       "radarr/password" = {};
       "lidarr/api_key" = {};
       "lidarr/password" = {};
+      "slskd/username" = {};
+      "slskd/password" = {};
+      "slskd/api_key" = {};
       "prowlarr/api_key" = {};
       "prowlarr/password" = {};
       "indexer-api-keys/DrunkenSlug" = {};
@@ -217,6 +220,8 @@
       "indexer-api-keys/NzbPlanet" = {};
       "jellyfin/dan_password" = {};
       "jellyfin/api_key" = {};
+      "lastfm/api_key".restartUnits = ["navidrome.service"];
+      "lastfm/secret".restartUnits = ["navidrome.service"];
       "qbittorrent/password" = {};
       "seerr/api_key" = {};
       "wireguard/conf" = {
