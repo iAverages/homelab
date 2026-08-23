@@ -9,7 +9,7 @@ in {
     enable = lib.mkEnableOption "mie";
     dockerImage = lib.mkOption {
       type = lib.types.str;
-      default = "ghcr.io/iaverages/mie@sha256:6b944e4550d51744be1db87aa23adaecc1aad702ca2246e49b1210afe3d20fcb";
+      default = "ghcr.io/iaverages/mie:sha256-e85d6e93abbac3c8b692dcf2b41d2c2289b2fcd15ac4fc53d7b99f4218d6364d";
     };
     b2 = {
       url = lib.mkOption {
