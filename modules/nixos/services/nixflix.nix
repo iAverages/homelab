@@ -29,11 +29,11 @@ in {
       "slskd.env" = {
         owner = "slskd";
         content = ''
-          SLSKD_SLSK_USERNAME=${config.sops.placeholder."slskd/username"}
-          SLSKD_SLSK_PASSWORD=${config.sops.placeholder."slskd/password"}
           SLSKD_USERNAME=dan
           SLSKD_PASSWORD=${config.sops.placeholder."jellyfin/dan_password"}
           SLSKD_API_KEY=${config.sops.placeholder."slskd/api_key"}
+          SLSKD_CONTROLLER_API_KEY=${config.sops.placeholder."slskd/api_key"}
+          SLSKD_CONTROLLER_SECRET=${config.sops.placeholder."slskd/relay_secret"}
         '';
       };
       "navidrome.env" = {
@@ -55,7 +55,7 @@ in {
 
           [Slskd]
           api_key = ${config.sops.placeholder."slskd/api_key"}
-          host_url = http://${config.vpnNamespaces.wg.namespaceAddress}:5030
+          host_url = http://100.68.250.71:5030
           url_base = /
           download_dir = /downloads
           delete_searches = False
@@ -111,9 +111,18 @@ in {
       domain = "slskd.nixflix";
       environmentFile = config.sops.templates."slskd.env".path;
       settings = {
+        instance_name = "kurumi";
         directories = {
           downloads = slskdDownloads;
           incomplete = "${slskdDownloads}/incomplete";
+        };
+        relay = {
+          enabled = true;
+          mode = "agent";
+          controller = {
+            address = "http://${config.vpnNamespaces.wg.bridgeAddress}:5032";
+            downloads = true;
+          };
         };
         shares = {
           directories = ["[Music]${cfg.storagePath}/media/music"];
@@ -129,6 +138,14 @@ in {
 
     services.nginx.virtualHosts."slskd.nixflix".locations."/".proxyPass =
       lib.mkForce "http://${config.vpnNamespaces.wg.namespaceAddress}:5030";
+    services.nginx.streamConfig = ''
+      server {
+        listen ${config.vpnNamespaces.wg.bridgeAddress}:5032;
+        proxy_pass shuna:5030;
+      }
+    '';
+
+    networking.firewall.interfaces.wg-br.allowedTCPPorts = [5032];
 
     vpnNamespaces.wg.portMappings = [
       {
@@ -388,12 +405,6 @@ in {
 
         wgConfFile = config.sops.secrets."wireguard/conf".path;
         accessibleFrom = ["192.168.1.0/24"];
-        openVPNPorts = [
-          {
-            port = 50300;
-            protocol = "tcp";
-          }
-        ];
       };
     };
 
@@ -411,9 +422,16 @@ in {
         wg = {
           unitConfig.Upholds = "qbittorrent.service";
           serviceConfig = {
+            ExecStartPost = lib.mkAfter [
+              "${pkgs.iproute2}/bin/ip netns exec wg ${pkgs.iptables}/bin/iptables -I OUTPUT 1 -o veth-wg -d ${config.vpnNamespaces.wg.bridgeAddress} -p tcp --dport 5032 -j ACCEPT"
+            ];
             Restart = "on-failure";
             RestartSec = "30s";
           };
+        };
+        nginx = {
+          after = ["tailscaled.service"];
+          wants = ["tailscaled.service"];
         };
         qbittorrent.serviceConfig = {
           Restart = "always";

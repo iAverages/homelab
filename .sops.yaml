@@ -8,6 +8,7 @@ keys:
   - &kurumi age1g6tnagjqzwamp6znhcanad9gk3r6qug34ad8fjg32gr938cpdcys7myz7d
   - &eu02 age1vrgyegqfjtf3uq357nhvtscuw2s6n7sheswjj0n0yde905p63ftsn6wmmf
   - &takina age1qglyxddmddvfdw94ukdgd9xut4kz7k2u2mt7rgeuvseekvzlj3cs9ntlws
+  - &shuna age1kfx2ua95x3erd8lmnph0j0mjpve2ek4zmdjwux5ncpdxv9eadypsqpx4xc
 
 creation_rules:
   - path_regex: infra/secrets/.*\.sops\.ya?ml$
@@ -24,6 +25,14 @@ creation_rules:
           - *kirsi
           - *kirsi-wsl
           - *kurumi
+
+  - path_regex: hosts/shuna/secrets/.*
+    key_groups:
+      - age:
+          - *izanami
+          - *kirsi
+          - *kirsi-wsl
+          - *shuna
 
   - path_regex: hosts/eu02/secrets/.*
     key_groups:

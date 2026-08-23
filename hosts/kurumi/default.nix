@@ -210,9 +210,8 @@
       "radarr/password" = {};
       "lidarr/api_key" = {};
       "lidarr/password" = {};
-      "slskd/username" = {};
-      "slskd/password" = {};
       "slskd/api_key" = {};
+      "slskd/relay_secret" = {};
       "prowlarr/api_key" = {};
       "prowlarr/password" = {};
       "indexer-api-keys/DrunkenSlug" = {};
@@ -266,6 +265,7 @@
     extraPaths = [
       "/opt/data"
       "/opt/kubernetes"
+      "/opt/nixflix-state"
       "/var/lib/syncthing"
     ];
   };
