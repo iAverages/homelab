@@ -335,12 +335,39 @@ in {
           enableTonemapping = true;
         };
         system.trickplayOptions.enableHwEncoding = true;
+        plugins."MyAnimeList-Sync".package = {
+          version = "1.6.0.2";
+          hash = "sha256-TU64986zANybZYJSMMpqHHA6E4tQe2qdllHweBOkys8=";
+          repository = "MyAnimeList-Sync";
+        };
+        plugins."File Transformation".package = {
+          version = "2.5.11.0";
+          hash = "sha256-RecLxMWjsrVc/nF3GxXNOcKs0pWOERib+r9UEz+D5+4=";
+          repository = "IAmParadox27 Plugins";
+        };
+        plugins."Plugin Pages".package = {
+          version = "2.4.11.0";
+          hash = "sha256-9SD+jKEUGVfNAsIEyXgcszadh0LOM6wKql87kIt4gKY=";
+          repository = "IAmParadox27 Plugins";
+        };
         system.pluginRepositories = {
           "Jellyfin Stable Plugin Repo".enabled = lib.mkForce false;
 
           "Jellyfin Stable" = {
             url = "https://repo.jellyfin.org/files/plugin/manifest.json";
             hash = lib.mkForce "1ykrpwya7px7dz4h92994kpqlf5jd429z7r4dckbw13236x5mpbx";
+            enabled = true;
+          };
+
+          "MyAnimeList-Sync" = {
+            url = "https://raw.githubusercontent.com/ryandash/jellyfin-myanimelist-sync/refs/heads/master/manifest.json";
+            hash = "1cnp5n6138dnjj4hlfwlhbac3z3d121kjwyb56bq2b045nphqix8";
+            enabled = true;
+          };
+
+          "IAmParadox27 Plugins" = {
+            url = "https://www.iamparadox.dev/jellyfin/plugins/manifest.json";
+            hash = "1b8bm5sj1q2kgv2ws4dryqbdh0hlziif0lchgm6zq3cdn9k6grkj";
             enabled = true;
           };
         };
