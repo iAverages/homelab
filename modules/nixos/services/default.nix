@@ -1,5 +1,6 @@
 {
   imports = [
+    ./anki-sync-server.nix
     ./borg-backup.nix
     ./comin.nix
     ./external-smtp.nix

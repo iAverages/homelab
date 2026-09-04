@@ -69,6 +69,16 @@
     openssh.enable = true;
     config-git-deploy.enable = false;
 
+    anki-sync-server = {
+      enable = true;
+      users = [
+        {
+          username = "dan";
+          passwordFile = config.sops.secrets.anki-sync-password.path;
+        }
+      ];
+    };
+
     k3s.manifests.flux-sync.content = [
       {
         apiVersion = "source.toolkit.fluxcd.io/v1";
@@ -234,6 +244,7 @@
       "usenet/eweka/password" = {};
       "usenet/newsgroupdirect/username" = {};
       "usenet/newsgroupdirect/password" = {};
+      "anki-sync-password" = {};
     };
     age.sshKeyPaths = ["/root/.ssh/id_ed25519"];
   };
