@@ -25,6 +25,10 @@ in {
         then "grafana.${config.homelab.domain}"
         else null;
     };
+    majorPageFaultThreshold = lib.mkOption {
+      type = types.nullOr types.int;
+      default = null;
+    };
     # TODO: make both of these optional
     discordWebhookUrl = lib.mkOption {
       type = types.str;
@@ -65,11 +69,37 @@ in {
         kubeControllerManager.enable = false;
         kubeScheduler.enable = false;
         kubeProxy.enable = false;
-        defaultRules.rules = {
-          kubeControllerManager = false;
-          kubeSchedulerAlerting = false;
-          kubeSchedulerRecording = false;
-          kubeProxy = false;
+        defaultRules =
+          {
+            rules = {
+              kubeControllerManager = false;
+              kubeSchedulerAlerting = false;
+              kubeSchedulerRecording = false;
+              kubeProxy = false;
+            };
+          }
+          // lib.optionalAttrs (cfg.majorPageFaultThreshold != null) {
+            disabled.NodeMemoryMajorPagesFaults = true;
+          };
+
+        additionalPrometheusRulesMap = lib.optionalAttrs (cfg.majorPageFaultThreshold != null) {
+          node-memory-major-page-faults.groups = [
+            {
+              name = "node-memory";
+              rules = [
+                {
+                  alert = "NodeMemoryMajorPagesFaults";
+                  expr = ''rate(node_vmstat_pgmajfault{job="node-exporter"}[5m]) > ${toString cfg.majorPageFaultThreshold}'';
+                  "for" = "15m";
+                  labels.severity = "warning";
+                  annotations = {
+                    summary = "Memory major page faults are occurring at a very high rate.";
+                    description = "Memory major pages are occurring above ${toString cfg.majorPageFaultThreshold} faults per second for 15 minutes at {{ $labels.instance }}, currently {{ printf \"%.2f\" $value }}.";
+                  };
+                }
+              ];
+            }
+          ];
         };
 
         alertmanager = {

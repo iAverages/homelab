@@ -313,6 +313,7 @@
         grafanaUser = config.sops.placeholder."grafana/username";
         grafanaPassword = config.sops.placeholder."grafana/password";
         discordWebhookUrl = config.sops.placeholder.discordWebhookUrl;
+        majorPageFaultThreshold = 2000;
         mail = {
           to = "kurumi-alerts@danielraybone.com";
           from = "no-reply@danielraybone.com";
