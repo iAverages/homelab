@@ -368,6 +368,51 @@ in {
         apiKey._secret = config.sops.secrets."seerr/api_key".path;
       };
 
+      maintainerr = {
+        enable = true;
+        rules =
+          map (show: {
+            name = "Watched ${show.library} To Delete";
+            description = "Deletes shows 30 days after admin watches every available episode unless tagged keep in Sonarr.";
+            inherit (show) library;
+            dataType = "show";
+            arrAction = "DELETE";
+            listExclusions = false;
+            sonarrServerName = show.server;
+            collection.deleteAfterDays = 30;
+            rules = [
+              {
+                customVal = {
+                  ruleTypeId = 2;
+                  value = "admin";
+                };
+                firstVal = [6 12];
+                action = "CONTAINS";
+                section = 0;
+              }
+              {
+                customVal = {
+                  ruleTypeId = 2;
+                  value = "keep";
+                };
+                operator = "0";
+                firstVal = [2 2];
+                action = "NOT_CONTAINS";
+                section = 0;
+              }
+            ];
+          }) [
+            {
+              library = "Shows";
+              server = "Sonarr";
+            }
+            {
+              library = "Anime";
+              server = "Sonarr Anime";
+            }
+          ];
+      };
+
       recyclarr = {
         enable = false;
         cleanupUnmanagedProfiles.enable = true;
