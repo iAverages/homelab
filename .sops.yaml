@@ -11,6 +11,13 @@ keys:
   - &shuna age1kfx2ua95x3erd8lmnph0j0mjpve2ek4zmdjwux5ncpdxv9eadypsqpx4xc
 
 creation_rules:
+  - path_regex: secrets/personal\.yaml$
+    key_groups:
+      - age:
+          - *izanami
+          - *kirsi
+          - *kirsi-wsl
+
   - path_regex: infra/secrets/.*\.sops\.ya?ml$
     key_groups:
       - age:

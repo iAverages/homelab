@@ -1,4 +1,9 @@
-{inputs, ...}: {
+{
+  config,
+  inputs,
+  lib,
+  ...
+}: {
   system.stateVersion = "23.11";
   nixpkgs = {
     config.allowUnfree = true;
@@ -15,7 +20,12 @@
       experimental-features = [
         "nix-command"
         "flakes"
-        "pipe-operators"
+        # lix and nix use different names for the same feature
+        (
+          if lib.getName config.nix.package == "lix"
+          then "pipe-operator"
+          else "pipe-operators"
+        )
       ];
       auto-optimise-store = true;
       substituters = [

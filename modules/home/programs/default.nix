@@ -1,0 +1,20 @@
+{
+  imports = [
+    ./alacritty.nix
+    ./atuin.nix
+    ./cargo.nix
+    ./chromium.nix
+    ./direnv.nix
+    ./fastfetch.nix
+    ./gh.nix
+    ./ghostty.nix
+    ./git.nix
+    ./herdr.nix
+    ./jujutsu.nix
+    ./nh.nix
+    ./opencode.nix
+    ./starship.nix
+    ./vesktop.nix
+    ./yt-dlp.nix
+  ];
+}

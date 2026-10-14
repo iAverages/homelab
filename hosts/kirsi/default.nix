@@ -1,64 +1,37 @@
-{config, ...}: {
+{
+  config,
+  inputs,
+  lib,
+  pkgs,
+  ...
+}: {
   imports = [
     ./hardware-configuration.nix
   ];
 
-  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.stable;
-  hardware.nvidia.open = false;
-  services.xserver.videoDrivers = ["nvidia"];
-  services.scanner.enable = true;
+  networking.hostName = "kirsi";
 
   sops = {
-    defaultSopsFile = ./secrets/secrets.yaml;
-    secrets = {
-      danPassword = {};
+    defaultSopsFile = ../../secrets/personal.yaml;
+    age = {
+      sshKeyPaths = ["/home/dan/.ssh/kirsi_ed25519"];
+      keyFile = "/home/dan/.config/sops/age/keys.txt";
     };
-    age.sshKeyPaths = ["/home/dan/.ssh/kirsi_ed25519"];
+    secrets.danPassword.neededForUsers = true;
   };
 
-  services.tailscale.enable = true;
-
-  # TODO: do i want to backup daily or just use sync thing?
-  # system.borgbackup.daily = {
-  #   enable = true;
-  #   repo = "ssh://u474421-sub6@u474421-sub6.your-storagebox.de:23/./backups";
-  #   discordNotificationWebhook = config.sops.secrets.discordWebhookUrl.path;
-  #   extraPaths = [
-  #     "/opt/data"
-  #     "/opt/kubernetes"
-  #   ];
-  # };
-
-  networking = {
-    hostName = "kirsi";
-    firewall = {
-      trustedInterfaces = ["tailscale0"];
-      allowedTCPPorts = [22];
-    };
-    hostId = "55b2d328";
-    useDHCP = true;
-    interfaces.enp4s0.useDHCP = true;
-  };
-
-  services.openssh. enable = true;
-
-  nixpkgs.hostPlatform = "x86_64-linux";
-
-  fileSystems."/mnt/games" = {
-    device = "/dev/disk/by-uuid/14C4A611C4A5F560";
-    fsType = "ntfs3";
-    options = ["uid=1000" "nofail"];
-  };
+  nix.package = pkgs.lixPackageSets.stable.lix;
 
   boot = {
+    initrd.systemd.enable = true;
+    plymouth.enable = true;
+    tmp.useTmpfs = true;
     loader = {
       efi.canTouchEfiVariables = true;
       limine = {
         enable = true;
         maxGenerations = 10;
-        secureBoot = {
-          enable = true;
-        };
+        secureBoot.enable = true;
         extraConfig = ''
           remember_last_entry: yes
         '';
@@ -71,5 +44,94 @@
     };
   };
 
-  system.stateVersion = "23.11";
+  hardware = {
+    nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
+    nvidia.open = false;
+    # VA-API on nvidia so chrome can hw-decode HEVC
+    graphics.extraPackages = [pkgs.nvidia-vaapi-driver];
+    bluetooth.enable = true;
+    openrazer.enable = true;
+  };
+  services.xserver.videoDrivers = ["nvidia"];
+  environment.sessionVariables = {
+    LIBVA_DRIVER_NAME = "nvidia";
+    NVD_BACKEND = "direct";
+  };
+
+  locale.gb.enable = true;
+  security.sudo-rs.enable = true;
+  security.pki.certificateFiles = [../../secrets/dan-lan-ca.crt];
+
+  networking = {
+    cloudflare-dns.enable = true;
+    resolvconf.enable = false;
+    firewall.allowedTCPPorts = [3000 3001 22];
+  };
+
+  environment.variables.NH_FLAKE = "/home/dan/homelab";
+
+  users.users.dan = {
+    shell = pkgs.zsh;
+    extraGroups = ["libvirtd"];
+  };
+
+  programs = {
+    zsh.enable = true;
+    dconf.enable = true;
+    hyprland.enable = true;
+    thunar.enable = true;
+    nix-ld.enable = true;
+    gnupg.agent.enable = true;
+    steam.enable = true;
+    streamcontroller.enable = true;
+    coolercontrol.enable = true;
+  };
+
+  services = {
+    tailscale.enable = true;
+    mullvad-vpn.enable = true;
+    userborn.enable = true;
+    pipewire.enable = true;
+    kanata.enable = true;
+    printing.enable = true;
+    fprintd.enable = true;
+    scanner.enable = true;
+
+    dbus = {
+      implementation = lib.mkForce "broker";
+      packages = [pkgs.dconf];
+    };
+    openssh = {
+      enable = true;
+      settings.PermitRootLogin = "no";
+    };
+  };
+
+  virtualisation = {
+    docker.enable = true;
+    waydroid.enable = true;
+    libvirtd = {
+      enable = true;
+      qemu.swtpm.enable = true;
+    };
+  };
+
+  services.udev.packages = [pkgs.via];
+  environment.systemPackages = with pkgs; [
+    via
+    vial
+    wine
+    ((import inputs.nixpkgs-stable {
+        inherit (pkgs.stdenv.hostPlatform) system;
+        config.allowUnfree = true;
+      }).lutris.override {
+        extraLibraries = pkgs: [
+          pkgs.gtk4
+          pkgs.libadwaita
+        ];
+      })
+    swtpm
+    xclip
+    virt-manager
+  ];
 }
