@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  inputs,
   ...
 }: {
   imports = [
@@ -155,6 +156,21 @@
       ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
       ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"
     '';
+  };
+
+  systemd.services.t3code = {
+    description = "T3 Code server";
+    wantedBy = ["multi-user.target"];
+    after = ["network-online.target" "tailscaled.service"];
+    wants = ["network-online.target"];
+    path = [pkgs.git pkgs.bash];
+    serviceConfig = {
+      User = "dan";
+      WorkingDirectory = "/home/dan";
+      ExecStart = "${inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.t3code}/bin/t3 serve --host 127.0.0.1 --port 3773";
+      ExecStartPost = "+${config.services.tailscale.package}/bin/tailscale serve --bg --service=svc:t3 --https=443 http://127.0.0.1:3773";
+      Restart = "on-failure";
+    };
   };
 
   systemd.services.set-hdd-spindown = {
