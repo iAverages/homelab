@@ -19,25 +19,47 @@
       |> nixpkgs.lib.attrNames
       |> (names: nixpkgs.lib.filter (name: nixpkgs.lib.filesystem.pathIsDirectory (hostsPath + "/${name}")) names);
 
+    homeHosts = nixpkgs.lib.filter (hostname: builtins.pathExists (hostsPath + "/${hostname}/home.nix")) hosts;
+    nixosHomeHosts = ["kurumi"];
+    standaloneHomeHosts = nixpkgs.lib.subtractLists nixosHomeHosts homeHosts;
+
+    homeModules = [
+      sops-nix.homeManagerModules.sops
+      noctalia.homeModules.default
+      mirai.homeManagerModules.default
+      ./modules/home
+    ];
+
     mkHost = hostname:
       nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
           system = "x86_64-linux";
         };
-        modules = [
-          sops-nix.nixosModules.sops
-          disko.nixosModules.disko
-          comin.nixosModules.comin
-          nixflix.nixosModules.default
+        modules =
+          [
+            sops-nix.nixosModules.sops
+            disko.nixosModules.disko
+            comin.nixosModules.comin
+            nixflix.nixosModules.default
 
-          ./modules/nixos/system/nix.nix
-          ./hosts/${hostname}
-          ./modules
-        ];
+            ./modules/nixos/system/nix.nix
+            ./hosts/${hostname}
+            ./modules
+          ]
+          ++ nixpkgs.lib.optionals (builtins.elem hostname nixosHomeHosts) [
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = {inherit inputs hostname;};
+                sharedModules = homeModules;
+                users.dan = import ./hosts/${hostname}/home.nix;
+              };
+            }
+          ];
       };
-
-    homeHosts = nixpkgs.lib.filter (hostname: builtins.pathExists (hostsPath + "/${hostname}/home.nix")) hosts;
 
     mkHome = hostname:
       home-manager.lib.homeManagerConfiguration {
@@ -49,20 +71,13 @@
         extraSpecialArgs = {
           inherit inputs hostname;
         };
-        modules = [
-          sops-nix.homeManagerModules.sops
-          noctalia.homeModules.default
-          mirai.homeManagerModules.default
-
-          ./hosts/${hostname}/home.nix
-          ./modules/home
-        ];
+        modules = homeModules ++ [./hosts/${hostname}/home.nix];
       };
   in {
     nixosConfigurations = nixpkgs.lib.genAttrs hosts mkHost;
 
     homeConfigurations =
-      homeHosts
+      standaloneHomeHosts
       |> map (hostname: nixpkgs.lib.nameValuePair "dan@${hostname}" (mkHome hostname))
       |> builtins.listToAttrs;
 
