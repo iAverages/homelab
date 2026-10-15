@@ -353,8 +353,6 @@ in {
         };
         system.trickplayOptions.enableHwEncoding = true;
         system.pluginRepositories = {
-          "Jellyfin Stable Plugin Repo".enabled = lib.mkForce false;
-
           "Jellyfin Stable" = {
             url = "https://repo.jellyfin.org/files/plugin/manifest.json";
             hash = lib.mkForce "0xgclhip9mq99sayn77dw8qhpv53s9fqh8q9j0wi920h19yf4a05";
