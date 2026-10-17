@@ -381,6 +381,22 @@
       discordToken = config.sops.placeholder."mie/discordToken";
       cdnUrl = "https://cdn.avrg.dev/";
     };
+    satisfactory = {
+      enable = true;
+      servers.factory = {
+        service.loadBalancerIP = "192.168.1.14";
+        resources = {
+          requests = {
+            cpu = "2";
+            memory = "8Gi";
+          };
+          limits = {
+            cpu = "8";
+            memory = "8Gi";
+          };
+        };
+      };
+    };
     vaultwarden = {
       enable = false;
       pushNotifications = {

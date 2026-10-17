@@ -10,6 +10,7 @@
     ./mie
     ./minecraft
     ./palworld
+    ./satisfactory
     ./paperless
     ./shiori
     ./spqtify.com
