@@ -17,7 +17,9 @@
   libxkbcommon,
   nss,
   systemd,
-  xorg,
+  libxdamage,
+  libxrandr,
+  libxkbfile,
 }:
 stdenv.mkDerivation rec {
   pname = "inkdrop";
@@ -40,9 +42,9 @@ stdenv.mkDerivation rec {
     libsecret
     libxkbcommon
     nss
-    xorg.libXdamage
-    xorg.libXrandr
-    xorg.libxkbfile
+    libxdamage
+    libxrandr
+    libxkbfile
   ];
 
   autoPatchelfIgnoreMissingDeps = ["libc.musl-x86_64.so.1"];

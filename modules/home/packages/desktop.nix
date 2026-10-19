@@ -38,6 +38,10 @@ in {
       (callPackage ./inkdrop.nix {})
       inputs.visual-diff.packages.${system}.default
       inputs.llm-agents.packages.${system}.chatgpt
+      inputs.llm-agents.packages.${system}.claude-desktop
+      inputs.llm-agents.packages.${system}.t3code-desktop
+
+      # refused to open on wa
 
       # refused to open on wayland, use x11 for now
       (protonmail-desktop.overrideAttrs (oldAttrs: {

@@ -59,6 +59,8 @@
         mounts."/opt/data" = {
           enable = true;
           mountPoint = "${config.home.homeDirectory}/nas";
+          # skip the slow remote df that stalls file managers
+          options.disable = "About";
         };
       };
     };

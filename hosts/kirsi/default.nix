@@ -47,16 +47,10 @@
   hardware = {
     nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
     nvidia.open = false;
-    # VA-API on nvidia so chrome can hw-decode HEVC
-    graphics.extraPackages = [pkgs.nvidia-vaapi-driver];
     bluetooth.enable = true;
     openrazer.enable = true;
   };
   services.xserver.videoDrivers = ["nvidia"];
-  environment.sessionVariables = {
-    LIBVA_DRIVER_NAME = "nvidia";
-    NVD_BACKEND = "direct";
-  };
 
   locale.gb.enable = true;
   security.sudo-rs.enable = true;
