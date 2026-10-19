@@ -55,6 +55,8 @@
     syncthing.enable = true;
     nixflix.enable = true;
 
+    wireproxy.enable = true;
+
     external-smtp = {
       enable = true;
       smtp = {

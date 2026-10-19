@@ -9,5 +9,6 @@
     ./syncthing.nix
     ./ssh.nix
     ./tailscale.nix
+    ./wireproxy.nix
   ];
 }
