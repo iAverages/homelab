@@ -47,7 +47,10 @@
   security.sudo-rs.enable = true;
   security.pki.certificateFiles = [../../secrets/dan-lan-ca.crt];
 
-  networking.cloudflare-dns.enable = true;
+  networking.pihole-dns = {
+    enable = true;
+    cloudflareFallback = true;
+  };
 
   environment.variables.NH_FLAKE = "/home/dan/homelab";
 

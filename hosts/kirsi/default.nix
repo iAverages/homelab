@@ -57,7 +57,7 @@
   security.pki.certificateFiles = [../../secrets/dan-lan-ca.crt];
 
   networking = {
-    cloudflare-dns.enable = true;
+    pihole-dns.enable = true;
     resolvconf.enable = false;
     firewall.allowedTCPPorts = [3000 3001 22];
   };
