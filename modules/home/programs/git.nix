@@ -42,7 +42,7 @@ in {
       };
       signing = {
         format = "ssh";
-        key = toString ../../../hosts + "/${hostname}/${hostname}_ed25519.pub";
+        key = "key::${pkgs.lib.getPublicKey hostname}";
         signByDefault = true;
       };
     };
