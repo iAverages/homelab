@@ -16,6 +16,11 @@ in {
       extraCompatPackages = [pkgs.proton-ge-bin];
     };
 
+    programs.gamemode.enable = true;
+    programs.gamescope.enable = true;
+    environment.systemPackages = [pkgs.mangohud];
+    users.users.dan.extraGroups = ["gamemode"];
+
     boot.kernel.sysctl = {
       # 20-shed.conf
       "kernel.sched_cfs_bandwidth_slice_us" = 3000;

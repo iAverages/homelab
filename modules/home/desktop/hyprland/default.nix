@@ -194,6 +194,11 @@ in {
               };
               no_anim = true;
             }
+            {
+              name = "games-allow-tearing";
+              match.class = "^(steam_app_.*|gamescope)$";
+              immediate = true;
+            }
           ];
 
         config = {
@@ -212,6 +217,7 @@ in {
               inactive_border = "#382D2E";
             };
             layout = "dwindle";
+            allow_tearing = true;
           };
 
           decoration = {
@@ -238,7 +244,10 @@ in {
 
           master = {new_status = "master";};
 
-          misc = {disable_hyprland_logo = true;};
+          misc = {
+            disable_hyprland_logo = true;
+            vrr = 2;
+          };
           input = {
             kb_layout = "gb";
             kb_variant = "";
