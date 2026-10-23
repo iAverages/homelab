@@ -7,9 +7,11 @@
   imports = [
     inputs.nixos-hardware.nixosModules.framework-16-7040-amd
     ./hardware-configuration.nix
+    ./disko.nix
   ];
 
   networking.hostName = "izanami";
+  networking.hostId = "fbac71d9";
 
   sops = {
     defaultSopsFile = ../../secrets/personal.yaml;
@@ -25,19 +27,24 @@
   boot = {
     initrd.systemd.enable = true;
     plymouth.enable = true;
+    tmp.useTmpfs = true;
+    zfs.forceImportRoot = false;
     loader = {
-      systemd-boot.enable = true;
-      systemd-boot.configurationLimit = 15;
       efi.canTouchEfiVariables = true;
+      limine = {
+        enable = true;
+        maxGenerations = 10;
+        secureBoot = {
+          enable = true;
+          autoGenerateKeys = true;
+          autoEnrollKeys.enable = true;
+        };
+        extraConfig = ''
+          remember_last_entry: yes
+        '';
+      };
     };
   };
-
-  swapDevices = [
-    {
-      device = "/swapfile";
-      size = 16 * 1024; # 16GB
-    }
-  ];
 
   hardware = {
     bluetooth.enable = true;
@@ -47,14 +54,20 @@
   security.sudo-rs.enable = true;
   security.pki.certificateFiles = [../../secrets/dan-lan-ca.crt];
 
-  networking.pihole-dns = {
-    enable = true;
-    cloudflareFallback = true;
+  networking = {
+    pihole-dns = {
+      enable = true;
+      cloudflareFallback = true;
+    };
+    resolvconf.enable = false;
   };
 
   environment.variables.NH_FLAKE = "/home/dan/nixconf";
 
-  users.users.dan.shell = pkgs.zsh;
+  users.users.dan = {
+    shell = pkgs.zsh;
+    extraGroups = ["libvirtd"];
+  };
 
   programs = {
     zsh.enable = true;
@@ -72,8 +85,7 @@
     userborn.enable = true;
     pipewire.enable = true;
     kanata.enable = true;
-    printing.enable = true;
-    fprintd.enable = true;
+    zfs.autoScrub.enable = true;
 
     dbus = {
       implementation = lib.mkForce "broker";
@@ -91,15 +103,6 @@
     via
     vial
     wine
-    # todo: what the fuck
-    ((import inputs.nixpkgs-stable {
-        inherit (pkgs.stdenv.hostPlatform) system;
-        config.allowUnfree = true;
-      }).lutris.override {
-        extraLibraries = pkgs: [
-          pkgs.gtk4
-          pkgs.libadwaita
-        ];
-      })
+    swtpm
   ];
 }

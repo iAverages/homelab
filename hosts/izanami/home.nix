@@ -16,6 +16,13 @@
 
   desktop.hyprland = {
     enable = true;
+    applications = [
+      {
+        package = "ghostty";
+        class = "com.mitchellh.ghostty";
+        workspace = 1;
+      }
+    ];
     monitors." " = {
       scale = "1.6";
       hyprland.workspaces = builtins.genList (i: i + 1) 10;
