@@ -100,7 +100,10 @@
           enable = true;
           mountPoint = "${config.home.homeDirectory}/nas";
           # skip the slow remote df that stalls file managers
-          options.disable = "About";
+          options = {
+            disable = "About";
+            vfs-cache-max-size = "10G";
+          };
         };
       };
     };
