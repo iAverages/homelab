@@ -52,7 +52,7 @@
     cloudflareFallback = true;
   };
 
-  environment.variables.NH_FLAKE = "/home/dan/homelab";
+  environment.variables.NH_FLAKE = "/home/dan/nixconf";
 
   users.users.dan.shell = pkgs.zsh;
 

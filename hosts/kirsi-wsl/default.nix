@@ -35,7 +35,7 @@
   security.sudo-rs.enable = true;
   security.pki.certificateFiles = [../../secrets/dan-lan-ca.crt];
 
-  environment.variables.NH_FLAKE = "/home/dan/homelab";
+  environment.variables.NH_FLAKE = "/home/dan/nixconf";
   services.dbus.implementation = lib.mkForce "broker";
 
   users.users.dan.shell = pkgs.zsh;

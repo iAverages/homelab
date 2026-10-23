@@ -62,7 +62,7 @@
     firewall.allowedTCPPorts = [3000 3001 22];
   };
 
-  environment.variables.NH_FLAKE = "/home/dan/homelab";
+  environment.variables.NH_FLAKE = "/home/dan/nixconf";
 
   users.users.dan = {
     shell = pkgs.zsh;
