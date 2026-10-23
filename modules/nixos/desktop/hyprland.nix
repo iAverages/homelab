@@ -17,6 +17,7 @@ in {
       package = inputs.hyprland.packages.${system}.hyprland;
       portalPackage = inputs.hyprland.packages.${system}.xdg-desktop-portal-hyprland;
       xwayland.enable = true;
+      withUWSM = true;
     };
 
     xdg.portal = {
@@ -59,6 +60,7 @@ in {
     };
 
     qt.enable = true;
+    services.displayManager.defaultSession = "hyprland-uwsm";
     services.displayManager.sddm = {
       enable = true;
       wayland.enable = true;

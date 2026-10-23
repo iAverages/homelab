@@ -15,9 +15,10 @@
 
   appCommand = app:
     lib.escapeShellArgs ([(lib.getExe pkgs.${app.package})] ++ (app.args or []));
+  uwsmApp = command: "uwsm app -- ${command}";
   foregroundApplications = builtins.filter (app: !(app.background or false)) cfg.applications;
   backgroundApplications = builtins.filter (app: app.background or false) cfg.applications;
-  startupCommands = map appCommand foregroundApplications;
+  startupCommands = map (app: uwsmApp (appCommand app)) foregroundApplications;
 
   monitorOutputName = name:
     if name == " "
@@ -154,7 +155,7 @@ in {
             "hyprland.start"
             (lua ''
               function()
-                hl.exec_cmd("nm-applet")
+                hl.exec_cmd(${toLua (uwsmApp "nm-applet")})
                 for _, command in ipairs(${toLua startupCommands}) do
                   hl.exec_cmd(command)
                 end
