@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   lib,
   pkgs,
@@ -96,6 +97,42 @@
   virtualisation = {
     docker.enable = true;
     waydroid.enable = true;
+  };
+
+  systemd.timers.weekly-update = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnCalendar = "Sun 04:00";
+      WakeSystem = true;
+      Persistent = true;
+    };
+  };
+
+  systemd.services.weekly-update = {
+    path = with pkgs; [config.nix.package git home-manager networkmanager util-linux];
+    serviceConfig.Type = "oneshot";
+    script = let
+      update = pkgs.writeShellScript "weekly-update" ''
+        set -e
+        as_dan() { runuser -u dan -- env HOME=/home/dan XDG_RUNTIME_DIR=/run/user/$(id -u dan) "$@"; }
+        nm-online -q -t 120
+        cd /home/dan/nixconf
+        as_dan git pull --ff-only https://github.com/iAverages/nixconf.git main
+        system=$(as_dan nix build --no-link --print-out-paths .#nixosConfigurations.izanami.config.system.build.toplevel)
+        nix-env -p /nix/var/nix/profiles/system --set "$system"
+        "$system/bin/switch-to-configuration" switch
+        as_dan home-manager switch --flake .#dan@izanami
+      '';
+    in ''
+      resumed=$(systemctl show sleep.target -P InactiveEnterTimestamp --timestamp=unix)
+      resumed=''${resumed#@}
+      if systemctl is-active -q sleep.target || (( $(date +%s) - ''${resumed:-0} < 600 )); then
+        trap 'systemctl suspend' EXIT
+      fi
+      if systemd-ac-power; then
+        systemd-inhibit --what=sleep:handle-lid-switch --why="weekly update" ${update}
+      fi
+    '';
   };
 
   services.udev.packages = [pkgs.via];

@@ -138,9 +138,9 @@ in {
         mainMod = {_var = "SUPER";};
 
         env = [
-          {_args = ["XCURSOR_SIZE" "24"];}
+          {_args = ["XCURSOR_SIZE" (toString config.gtk.cursorTheme.size)];}
           {_args = ["XCURSOR_THEME" "ZhuangFangyi"];}
-          {_args = ["HYPRCURSOR_SIZE" "24"];}
+          {_args = ["HYPRCURSOR_SIZE" (toString config.gtk.cursorTheme.size)];}
           {_args = ["HYPRCURSOR_THEME" "ZhuangFangyi"];}
         ];
         # TODO: make these configurable

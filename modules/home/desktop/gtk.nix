@@ -10,7 +10,7 @@ in {
     gtk = {
       cursorTheme = {
         name = "ZhuangFangyi";
-        size = 24;
+        size = lib.mkDefault 24;
       };
       gtk4.theme = cfg.theme;
       iconTheme = {
@@ -22,7 +22,7 @@ in {
 
     home.sessionVariables = {
       XCURSOR_THEME = "ZhuangFangyi";
-      XCURSOR_SIZE = "24";
+      XCURSOR_SIZE = toString cfg.cursorTheme.size;
     };
   };
 }

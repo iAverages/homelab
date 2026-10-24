@@ -79,10 +79,12 @@
   services = {
     mirai.enable = true;
     kdeconnect.enable = true;
-    jellyfin-mpv-shim.enable = true;
   };
 
-  gtk.enable = true;
+  gtk = {
+    enable = true;
+    cursorTheme.size = 32;
+  };
   xdg.mimeApps.enable = true;
   fonts.fontconfig.enable = true;
 
