@@ -162,5 +162,9 @@
       url = "git+https://git.kirsi.dev/SLOP/visual-diff";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    fran-db = {
+      url = "github:SalahaldinBilal/fran-db";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }

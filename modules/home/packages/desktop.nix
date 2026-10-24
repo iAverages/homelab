@@ -40,6 +40,7 @@ in {
       inputs.llm-agents.packages.${system}.chatgpt
       inputs.llm-agents.packages.${system}.claude-desktop
       inputs.llm-agents.packages.${system}.t3code-desktop
+      inputs.fran-db.packages.${pkgs.stdenv.hostPlatform.system}.default
 
       # refused to open on wa
 
