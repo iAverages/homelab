@@ -77,7 +77,16 @@
   };
 
   services = {
-    mirai.enable = true;
+    mirai = {
+      enable = true;
+      settings = {
+        content_manager_type = "git";
+        git = {
+          url = "https://github.com/iaverages/wallpapers.git";
+          path = "anime";
+        };
+      };
+    };
     kdeconnect.enable = true;
   };
 
